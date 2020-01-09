@@ -9777,6 +9777,38 @@ function DF:ShowErrorMessage (errorMessage, titleText)
 	DF.ErrorMessagePanel.FlashAnimation:Play()
 end
 
+--[[
+	DF:SetPointOffsets(frame, xOffset, yOffset)
 
+	Set an offset into the already existing offset of the frame
+	If passed xOffset:1 and yOffset:1 and the frame has 1 -1,  the new offset will be 2 -2
+	This function is great to create a 1 knob for distance
 
---functionn falsee truee breakk elsea endz 
+	@frame: a frame to have the offsets changed
+	@xOffset: the amount to apply into the x offset
+	@yOffset: the amount to apply into the y offset
+--]]
+function DF:SetPointOffsets(frame, xOffset, yOffset)
+	for i = 1, frame:GetNumPoints() do
+		local anchor1, anchorTo, anchor2, x, y = frame:GetPoint(i)
+		x = x or 0
+		y = y or 0
+
+		if (x >= 0) then
+			xOffset = x + xOffset
+
+		elseif (x < 0) then
+			xOffset = x - xOffset
+		end
+
+		if (y >= 0) then
+			yOffset = y + yOffset
+		
+		elseif (y < 0) then
+			yOffset = y - yOffset
+		end
+
+		frame:SetPoint(anchor1, anchorTo, anchor2, xOffset, yOffset)
+	end
+end
+
