@@ -9319,7 +9319,7 @@ DF.TimeLineBlockFunctions = {
 				if (isAura) then
 					block.auraLength:Show()
 					block.auraLength:SetWidth (pixelPerSecond * isAura)
-					block:SetWidth (pixelPerSecond * isAura)
+					block:SetWidth (max (pixelPerSecond * isAura, 16))
 				else
 					block.auraLength:Hide()
 				end
@@ -9327,7 +9327,7 @@ DF.TimeLineBlockFunctions = {
 				block.background:SetVertexColor (0, 0, 0, 0)
 			else
 				block.background:SetVertexColor (unpack (color))
-				PixelUtil.SetSize (block, width, self:GetHeight())
+				PixelUtil.SetSize (block, max (width, 16), self:GetHeight())
 				block.auraLength:Hide()
 			end
 		end
@@ -9564,7 +9564,12 @@ function DF:CreateTimeLineFrame (parent, name, options, timelineOptions)
 		horizontalSlider:SetMinMaxValues (0, scrollWidth)
 		horizontalSlider:SetValue (0)
 		horizontalSlider:SetScript ("OnValueChanged", function (self)
-			frameCanvas:SetHorizontalScroll (self:GetValue())
+			local _, maxValue = horizontalSlider:GetMinMaxValues()
+			local stepValue = ceil (ceil(self:GetValue() * maxValue)/maxValue)
+			if (stepValue ~= horizontalSlider.currentValue) then
+				horizontalSlider.currentValue = stepValue
+				frameCanvas:SetHorizontalScroll (stepValue)
+			end
 		end)
 		
 		frameCanvas.horizontalSlider = horizontalSlider
@@ -9595,9 +9600,12 @@ function DF:CreateTimeLineFrame (parent, name, options, timelineOptions)
 		scaleSlider:SetValue (DF:GetRangeValue (frameCanvas.options.scale_min, frameCanvas.options.scale_max, 0.5))
 
 		scaleSlider:SetScript ("OnValueChanged", function (self)
-			local current = scaleSlider:GetValue()
-			frameCanvas.currentScale = current
-			frameCanvas:RefreshTimeLine()
+			local stepValue = ceil(self:GetValue() * 100)/100
+			if (stepValue ~= frameCanvas.currentScale) then
+				local current = stepValue
+				frameCanvas.currentScale = stepValue
+				frameCanvas:RefreshTimeLine()
+			end
 		end)
 
 	--create vertical slider
