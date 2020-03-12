@@ -650,7 +650,9 @@ function DetailsFrameworkDropDownOnMouseDown (button)
 						_this_row.label:SetFont ("GameFontHighlightSmall", 10.5)
 					end
 					
-					_this_row.statusbar:SetTexture (_table.statusbar)
+					_this_row.statusbar:SetTexture (_table.statusbar or "Interface\\Tooltips\\UI-Tooltip-Background")
+					--print (_this_row.statusbar, _table.statusbar, _table.statusbar or "Interface\\Tooltips\\UI-Tooltip-Background")
+					print (_this_row.statusbar:GetTexture())
 					_this_row.label:SetText (_table.label)
 					
 					if (currentText and currentText == _table.label) then
@@ -1150,6 +1152,7 @@ function DF:CreateDropdownButton (parent, name)
 	statusbar:SetPoint ("left", f, "left", 1, 0)
 	statusbar:SetPoint ("right", f, "right", -10, 0)
 	statusbar:SetSize (150, 20)
+	statusbar:SetTexture ([[Interface\Tooltips\UI-Tooltip-Background]])
 	f.statusbar = statusbar
 	
 	local icon = f:CreateTexture ("$parent_IconTexture", "OVERLAY")
