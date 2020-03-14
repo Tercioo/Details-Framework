@@ -1542,13 +1542,13 @@ end
 		frame.RefreshOptions = refresh_options
 		frame.widget_list = {}
 		frame.widget_list_by_type = {
-			"dropdown" = {}, -- "select"
-			"switch" = {}, -- "toggle"
-			"slider" = {}, -- "range"
-			"color" = {}, --
-			"button" = {}, -- "execute"
-			"textentry" = {}, --
-			"label" = {}, --"text"
+			["dropdown"] = {}, -- "select"
+			["switch"] = {}, -- "toggle"
+			["slider"] = {}, -- "range"
+			["color"] = {}, --
+			["button"] = {}, -- "execute"
+			["textentry"] = {}, --
+			["label"] = {}, --"text"
 		}
 		frame.widgetids = {}
 		frame.GetWidgetById = get_frame_by_id
