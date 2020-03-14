@@ -950,7 +950,7 @@ end
 			local widget = parent.widget_list_by_type[widgetType][indexTable[widgetType]]
 			
 			if (not widget) then
-				widget = DF:CreateDropDown (parent, function()end, nil, 140, 18, nil, "$parentWidget" .. widgetType .. indexTable[widgetType])
+				widget = DF:CreateDropDown (parent, function() return {} end, nil, 140, 18, nil, "$parentWidget" .. widgetType .. indexTable[widgetType])
 				widget.hasLabel = DF:CreateLabel (parent, "", 10, "white", "", nil, "$parentWidget" .. widgetType .. indexTable[widgetType] .. "label", "overlay")
 				tinsert(parent.widget_list, widget)
 				tinsert(parent.widget_list_by_type[widgetType], widget)
@@ -963,9 +963,22 @@ end
 			indexTable[widgetType] = indexTable[widgetType] + 1
 			return widget
 
-
 		elseif (widgetType == "switch") then
+			local widget = parent.widget_list_by_type[widgetType][indexTable[widgetType]]
 
+			if (not widget) then
+				local widget = DF:CreateSwitch (parent, nil, true, 20, 20, nil, nil, nil, "$parentWidget" .. widgetType .. indexTable[widgetType])
+				widget.hasLabel = DF:CreateLabel (parent, "", 10, "white", "", nil, "$parentWidget" .. widgetType .. indexTable[widgetType] .. "label", "overlay")
+
+				tinsert(parent.widget_list, widget)
+				tinsert(parent.widget_list_by_type[widgetType], widget)
+			else
+				widget:ClearHooks()
+
+			end
+
+			indexTable[widgetType] = indexTable[widgetType] + 1
+			return widget
 
 		elseif (widgetType == "slider") then
 
@@ -1035,6 +1048,7 @@ end
 					parent.widgetids [widget_table.id] = label
 				end
 
+			--dropdowns
 			elseif (widget_table.type == "select" or widget_table.type == "dropdown") then
 
 				local dropdown = getMenuWidgetVolative(parent, "dropdown", widgetIndexes)
@@ -1047,8 +1061,9 @@ end
 				dropdown._get = widget_table.get
 				dropdown.widget_type = "select"
 
+
 				dropdown.hasLabel.text = widget_table.name .. (use_two_points and ": " or "")
-				dropdown.hasLabel:SetTemplate(widget_table.text_template)
+				dropdown.hasLabel:SetTemplate(widget_table.text_template or text_template)
 				dropdown:ClearAllPoints()
 				dropdown:SetPoint ("left", dropdown.hasLabel, "right", 2)
 				dropdown.hasLabel:ClearAllPoints()
@@ -1071,6 +1086,54 @@ end
 				end
 				
 				local size = dropdown.hasLabel.widget:GetStringWidth() + 140 + 4
+				if (size > max_x) then
+					max_x = size
+				end
+
+			--switchs
+			elseif (widget_table.type == "toggle" or widget_table.type == "switch") then
+
+				local switch = getMenuWidgetVolative(parent, "switch", widgetIndexes)
+
+				switch:SetValue(widget_table.get())
+				switch:SetTemplate(switch_template)
+				switch:SetAsCheckBox() --it's always a checkbox on volatile menu
+
+				switch.tooltip = widget_table.desc
+				switch._get = widget_table.get
+				switch.widget_type = "toggle"
+				switch.OnSwitch = widget_table.set
+				
+				if (value_change_hook) then
+					switch:SetHook ("OnSwitch", value_change_hook)
+				end
+				
+				--> hook list
+				if (widget_table.hooks) then
+					for hookName, hookFunc in pairs (widget_table.hooks) do
+						switch:SetHook (hookName, hookFunc)
+					end
+				end
+
+				switch.hasLabel.text = widget_table.name .. (use_two_points and ": " or "")
+				switch.hasLabel:SetTemplate(widget_table.text_template or text_template)
+
+				switch:ClearAllPoints()
+				switch.hasLabel:ClearAllPoints()
+
+				if (widget_table.boxfirst) then
+					switch:SetPoint (cur_x, cur_y)
+					switch.hasLabel:SetPoint ("left", switch, "right", 2)
+				else
+					switch.hasLabel:SetPoint (cur_x, cur_y)
+					switch:SetPoint ("left", switch.hasLabel, "right", 2)
+				end
+
+				if (widget_table.id) then
+					parent.widgetids [widget_table.id] = switch
+				end
+				
+				local size = switch.hasLabel:GetStringWidth() + 60 + 4
 				if (size > max_x) then
 					max_x = size
 				end
@@ -1531,7 +1594,7 @@ end
 		for i = 1, #frame.widget_list do
 			frame.widget_list[i]:Hide()
 			if (frame.widget_list[i].hasLabel) then
-				frame.widget_list[i].hasLabel:Hide()
+				frame.widget_list[i].hasLabel:SetText("")
 			end
 		end
 
