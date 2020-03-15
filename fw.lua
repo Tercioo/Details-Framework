@@ -1,5 +1,5 @@
 
-local dversion = 176
+local dversion = 177
 
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary (major, minor)
@@ -967,31 +967,81 @@ end
 			local widget = parent.widget_list_by_type[widgetType][indexTable[widgetType]]
 
 			if (not widget) then
-				local widget = DF:CreateSwitch (parent, nil, true, 20, 20, nil, nil, nil, "$parentWidget" .. widgetType .. indexTable[widgetType])
+				widget = DF:CreateSwitch (parent, nil, true, 20, 20, nil, nil, nil, "$parentWidget" .. widgetType .. indexTable[widgetType])
 				widget.hasLabel = DF:CreateLabel (parent, "", 10, "white", "", nil, "$parentWidget" .. widgetType .. indexTable[widgetType] .. "label", "overlay")
 
 				tinsert(parent.widget_list, widget)
 				tinsert(parent.widget_list_by_type[widgetType], widget)
 			else
 				widget:ClearHooks()
-
 			end
 
 			indexTable[widgetType] = indexTable[widgetType] + 1
 			return widget
 
 		elseif (widgetType == "slider") then
+			local widget = parent.widget_list_by_type[widgetType][indexTable[widgetType]]
+			
+			if (not widget) then
+				widget = DF:CreateSlider (parent, 140, 20, 1, 2, 1, 1, false, nil, "$parentWidget" .. widgetType .. indexTable[widgetType])
+				widget.hasLabel = DF:CreateLabel (parent, "", 10, "white", "", nil, "$parentWidget" .. widgetType .. indexTable[widgetType] .. "label", "overlay")
 
+				tinsert(parent.widget_list, widget)
+				tinsert(parent.widget_list_by_type[widgetType], widget)
+			else
+				widget:ClearHooks()
+			end
+
+			indexTable[widgetType] = indexTable[widgetType] + 1
+			return widget
 
 		elseif (widgetType == "color") then
+			local widget = parent.widget_list_by_type[widgetType][indexTable[widgetType]]
+			
+			if (not widget) then
+				widget = DF:CreateColorPickButton (parent, "$parentWidget" .. widgetType .. indexTable[widgetType], nil, function()end, 1)
+				widget.hasLabel = DF:CreateLabel (parent, "", 10, "white", "", nil, "$parentWidget" .. widgetType .. indexTable[widgetType] .. "label", "overlay")
 
+				tinsert(parent.widget_list, widget)
+				tinsert(parent.widget_list_by_type[widgetType], widget)
+			else
+				widget:ClearHooks()
+			end
+
+			indexTable[widgetType] = indexTable[widgetType] + 1
+			return widget
 
 		elseif (widgetType == "button") then
+			local widget = parent.widget_list_by_type[widgetType][indexTable[widgetType]]
+			
+			if (not widget) then
+				widget = DF:CreateButton (parent, function()end, 120, 18, "", nil, nil, nil, nil, "$parentWidget" .. widgetType .. indexTable[widgetType])
+				widget.hasLabel = DF:CreateLabel (parent, "", 10, "white", "", nil, "$parentWidget" .. widgetType .. indexTable[widgetType] .. "label", "overlay")
 
+				tinsert(parent.widget_list, widget)
+				tinsert(parent.widget_list_by_type[widgetType], widget)
+			else
+				widget:ClearHooks()
+			end
+
+			indexTable[widgetType] = indexTable[widgetType] + 1
+			return widget
 
 		elseif (widgetType == "textentry") then
+			local widget = parent.widget_list_by_type[widgetType][indexTable[widgetType]]
+			
+			if (not widget) then
+				widget = DF:CreateTextEntry (parent, function()end, 120, 18, nil, "$parentWidget" .. widgetType .. indexTable[widgetType])
+				widget.hasLabel = DF:CreateLabel (parent, "", 10, "white", "", nil, "$parentWidget" .. widgetType .. indexTable[widgetType] .. "label", "overlay")
 
-									
+				tinsert(parent.widget_list, widget)
+				tinsert(parent.widget_list_by_type[widgetType], widget)
+			else
+				widget:ClearHooks()
+			end
+
+			indexTable[widgetType] = indexTable[widgetType] + 1
+			return widget
 		end
 	end
 
@@ -1134,6 +1184,180 @@ end
 				end
 				
 				local size = switch.hasLabel:GetStringWidth() + 60 + 4
+				if (size > max_x) then
+					max_x = size
+				end
+
+			--slider
+			elseif (widget_table.type == "range" or widget_table.type == "slider") then
+
+				local slider = getMenuWidgetVolative(parent, "slider", widgetIndexes)
+
+				slider.slider:SetMinMaxValues (widget_table.min, widget_table.max)
+				slider.slider:SetValue (widget_table.get())
+				slider.ivalue = slider.slider:GetValue()
+
+				if (widget_table.usedecimals) then
+					slider.slider:SetValueStep (0.01)
+				else
+					slider.slider:SetValueStep (widget_table.step)
+				end
+
+				slider:SetTemplate(slider_template)
+
+				slider.tooltip = widget_table.desc
+				slider._get = widget_table.get
+				slider.widget_type = "range"
+				slider:SetHook ("OnValueChange", widget_table.set)
+
+				if (value_change_hook) then
+					slider:SetHook ("OnValueChange", value_change_hook)
+				end
+				
+				if (widget_table.thumbscale) then
+					slider:SetThumbSize (slider.thumb.originalWidth * widget_table.thumbscale, nil)
+				else
+					slider:SetThumbSize (slider.thumb.originalWidth * 1.3, nil)
+				end
+
+				--> hook list
+				if (widget_table.hooks) then
+					for hookName, hookFunc in pairs (widget_table.hooks) do
+						slider:SetHook (hookName, hookFunc)
+					end
+				end
+
+				slider.hasLabel.text = widget_table.name .. (use_two_points and ": " or "")
+				slider.hasLabel:SetTemplate(widget_table.text_template or text_template)
+				
+				slider:SetPoint ("left", slider.hasLabel, "right", 2)
+				slider.hasLabel:SetPoint (cur_x, cur_y)
+				
+				if (widget_table.id) then
+					parent.widgetids [widget_table.id] = slider
+				end
+
+				local size = slider.hasLabel:GetStringWidth() + 140 + 6
+				if (size > max_x) then
+					max_x = size
+				end
+
+			--color
+			elseif (widget_table.type == "color" or widget_table.type == "color") then
+
+				local colorpick = getMenuWidgetVolative(parent, "color", widgetIndexes)
+				colorpick.color_callback = widget_table.set --callback
+				colorpick:SetTemplate(button_template)
+
+				colorpick.tooltip = widget_table.desc
+				colorpick._get = widget_table.get
+				colorpick.widget_type = "color"
+
+				local default_value, g, b, a = widget_table.get()
+				if (type (default_value) == "table") then
+					colorpick:SetColor (unpack (default_value))
+				else
+					colorpick:SetColor (default_value, g, b, a)
+				end
+				
+				if (value_change_hook) then
+					colorpick:SetHook ("OnColorChanged", value_change_hook)
+				end
+				
+				--> hook list
+				if (widget_table.hooks) then
+					for hookName, hookFunc in pairs (widget_table.hooks) do
+						colorpick:SetHook (hookName, hookFunc)
+					end
+				end
+
+				colorpick.hasLabel.text = widget_table.name .. (use_two_points and ": " or "")
+				colorpick.hasLabel:SetTemplate(widget_table.text_template or text_template)
+				
+				colorpick:SetPoint ("left", colorpick.hasLabel, "right", 2)
+				colorpick.hasLabel:SetPoint (cur_x, cur_y)
+				
+				if (widget_table.id) then
+					parent.widgetids [widget_table.id] = colorpick
+				end
+
+				local size = colorpick.hasLabel:GetStringWidth() + 60 + 4
+				if (size > max_x) then
+					max_x = size
+				end
+
+			--button
+			elseif (widget_table.type == "execute" or widget_table.type == "button") then
+				
+				local button = getMenuWidgetVolative(parent, "button", widgetIndexes)
+
+				button:SetTemplate(button_template)
+				button:SetSize(widget_table.width or 120, widget_table.height or 18)
+				button:SetClickFunction(widget_table.func, widget_table.param1, widget_table.param2)
+
+				local textTemplate = widget_table.text_template or text_template or DF.font_templates ["ORANGE_FONT_TEMPLATE"]
+				button.textcolor = textTemplate.color
+				button.textfont = textTemplate.font
+				button.textsize = textTemplate.size
+				button.text = widget_table.name
+
+				button:SetPoint (cur_x, cur_y)
+				button.tooltip = widget_table.desc
+				button.widget_type = "execute"
+				
+				--> execute doesn't trigger global callback
+				
+				--> hook list
+				if (widget_table.hooks) then
+					for hookName, hookFunc in pairs (widget_table.hooks) do
+						button:SetHook (hookName, hookFunc)
+					end
+				end
+
+				if (widget_table.id) then
+					parent.widgetids [widget_table.id] = button
+				end
+				
+				local size = button:GetWidth() + 4
+				if (size > max_x) then
+					max_x = size
+				end
+
+			--textentry
+			elseif (widget_table.type == "textentry") then
+
+				local textentry = getMenuWidgetVolative(parent, "textentry", widgetIndexes)
+
+				textentry:SetCommitFunction(widget_table.func)
+				textentry:SetTemplate(widget_table.template or widget_table.button_template or button_template)
+				textentry:SetSize(widget_table.width or 120, widget_table.height or 18)
+
+				textentry.tooltip = widget_table.desc
+				textentry.text = widget_table.get()
+				textentry._get = widget_table.get
+				textentry.widget_type = "textentry"
+				textentry:SetHook ("OnEnterPressed", widget_table.set)
+				textentry:SetHook ("OnEditFocusLost", widget_table.set)
+
+				textentry.hasLabel.text = widget_table.name .. (use_two_points and ": " or "")
+				textentry.hasLabel:SetTemplate(widget_table.text_template or text_template)
+				textentry:SetPoint ("left", textentry.hasLabel, "right", 2)
+				textentry.hasLabel:SetPoint (cur_x, cur_y)
+
+				--> text entry doesn't trigger global callback
+				
+				--> hook list
+				if (widget_table.hooks) then
+					for hookName, hookFunc in pairs (widget_table.hooks) do
+						textentry:SetHook (hookName, hookFunc)
+					end
+				end
+
+				if (widget_table.id) then
+					parent.widgetids [widget_table.id] = textentry
+				end
+				
+				local size = textentry.hasLabel:GetStringWidth() + 60 + 4
 				if (size > max_x) then
 					max_x = size
 				end
