@@ -3647,6 +3647,24 @@ function DF:GetRangeCheckSpellForSpec(specId)
 end
 
 
+--key is instanceId from GetInstanceInfo()
+-- /dump GetInstanceInfo()
+DF.BattlegroundSizes = {
+	[2245] = 15, --Deepwind Gorge
+	[2106] = 10, --Warsong Gulch
+	[2107] = 15, --Arathi Basin
+	[566] = 15, --Eye of the Storm
+	[30]  = 40,	--Alterac Valley
+	[628] = 40, --Isle of Conquest
+	[761] = 10, --The Battle for Gilneas
+	[726] = 10, --Twin Peaks
+	[727] = 10, --Silvershard Mines
+	[998] = 10, --Temple of Kotmogu
+	[2118] = 40, --Battle for Wintergrasp
+	[1191] = 25, --Ashran
+	[1803] = 10, --Seething Shore
+}
+
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --> delta seconds reader
 
