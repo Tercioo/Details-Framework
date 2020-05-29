@@ -838,11 +838,12 @@ local align_rows = function (self)
 
 					tinsert (line.checkbox_inuse, checkbox)
 
-					checkbox:SetPoint ("left", line, "left", self._anchors [#self._anchors], 0)
+					checkbox:SetPoint ("left", line, "left", self._anchors [#self._anchors] + ((row.width - 20) / 2), 0)
 					if (sindex == rows_shown) then
-						checkbox:SetWidth (row.width - 25)
+						checkbox:SetWidth (20)
+						--checkbox:SetWidth (row.width - 25)
 					else
-						checkbox:SetWidth (row.width)
+						checkbox:SetWidth (20)
 					end
 
 					checkbox.onenter_func = nil
@@ -1001,10 +1002,10 @@ local update_rows = function (self, updated_rows)
 		end
 
 		for i = #row.checkbox_inuse, 1, -1 do
-			tinsert (row.row.checkbox_available, tremove (row.checkbox_inuse, i))
+			tinsert (row.checkbox_available, tremove (row.checkbox_inuse, i))
 		end
-		for i = 1, #row.row.checkbox_available do
-			row.row.checkbox_available[i]:Hide()
+		for i = 1, #row.checkbox_available do
+			row.checkbox_available[i]:Hide()
 		end
 		
 		for i = #row.icon_inuse, 1, -1 do
@@ -1073,9 +1074,7 @@ local create_panel_checkbox = function (self, row)
 
 	local switch = DF:NewSwitch (row, nil, "$parentCheckBox" .. row.checkbox_total, nil, 20, 20, nil, nil, false)
 	switch:SetAsCheckBox()
-
-	switch:SetHook ("OnEnter", button_on_enter)
-	switch:SetHook ("OnLeave", button_on_leave)
+	switch:SetTemplate(DF:GetTemplate ("switch", "OPTIONS_CHECKBOX_TEMPLATE"))
 
 	tinsert (row.checkbox_available, switch)
 end
@@ -1214,7 +1213,7 @@ function DF:NewFillPanel (parent, rows, name, member, w, h, total_lines, fill_ro
 				if (results and results [1]) then
 					row:Show()
 
-					local text, entry, button, icon, texture = 1, 1, 1, 1, 1
+					local text, entry, button, icon, texture, checkbox = 1, 1, 1, 1, 1, 1
 					
 					for index, t in ipairs (panel.rows) do
 						if (not t.hidden) then
@@ -1247,8 +1246,13 @@ function DF:NewFillPanel (parent, rows, name, member, w, h, total_lines, fill_ro
 								local checkboxwidget = row.checkbox_inuse [button]
 								checkbox = checkbox + 1
 								checkboxwidget.index = real_index
-
 								checkboxwidget:SetValue(results [index])
+
+								local func = function()
+									t.func (real_index, index)
+									panel:Refresh()
+								end
+								checkboxwidget.OnSwitch = func
 
 							elseif (t.type == "button") then
 								local buttonwidget = row.button_inuse [button]
@@ -1299,11 +1303,28 @@ function DF:NewFillPanel (parent, rows, name, member, w, h, total_lines, fill_ro
 								
 								iconwidget.line = index
 								iconwidget.index = real_index
-								
-								--print (index, results [index])
+
 								if (type (results [index]) == "string") then
 									local result = results [index]:gsub (".-%\\", "")
 									iconwidget._icon.texture = results [index]
+								
+								elseif (type (results [index]) == "table") then
+									iconwidget._icon:SetTexture (results [index].texture)
+
+									local textCoord = results [index].texcoord
+									if (textCoord) then
+										iconwidget._icon:SetTexCoord (unpack(textCoord))
+									else
+										iconwidget._icon:SetTexCoord (0, 1, 0, 1)
+									end
+									
+									local color = results [index].color
+									if (color) then
+										local r, g, b, a = DF:ParseColors(color)
+										iconwidget._icon:SetVertexColor(r, g, b, a)
+									else
+										iconwidget._icon:SetVertexColor(1, 1, 1, 1)
+									end
 								else
 									iconwidget._icon:SetTexture (results [index])
 								end
@@ -1320,6 +1341,25 @@ function DF:NewFillPanel (parent, rows, name, member, w, h, total_lines, fill_ro
 								if (type (results [index]) == "string") then
 									local result = results [index]:gsub (".-%\\", "")
 									texturewidget.texture = results [index]
+								
+								elseif (type (results [index]) == "table") then
+									texturewidget:SetTexture (results [index].texture)
+
+									local textCoord = results [index].texcoord
+									if (textCoord) then
+										texturewidget:SetTexCoord (unpack(textCoord))
+									else
+										texturewidget:SetTexCoord (0, 1, 0, 1)
+									end
+									
+									local color = results [index].color
+									if (color) then
+										local r, g, b, a = DF:ParseColors(color)
+										texturewidget:SetVertexColor(r, g, b, a)
+									else
+										texturewidget:SetVertexColor(1, 1, 1, 1)
+									end
+
 								else
 									texturewidget:SetTexture (results [index])
 								end
