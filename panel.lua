@@ -826,6 +826,29 @@ local align_rows = function (self)
 						entry.onleave_func = row.onleave
 					end
 				end
+
+			elseif (type == "checkbox") then	
+				for i = 1, #self.scrollframe.lines do
+					local line = self.scrollframe.lines [i]
+					local checkbox = tremove (line.checkbox_available)
+					if (not checkbox) then
+						self:CreateCheckbox (line)
+						checkbox = tremove (line.checkbox_available)
+					end
+
+					tinsert (line.checkbox_inuse, checkbox)
+
+					checkbox:SetPoint ("left", line, "left", self._anchors [#self._anchors], 0)
+					if (sindex == rows_shown) then
+						checkbox:SetWidth (row.width - 25)
+					else
+						checkbox:SetWidth (row.width)
+					end
+
+					checkbox.onenter_func = nil
+					checkbox.onleave_func = nil
+				end
+
 			elseif (type == "button") then
 				for i = 1, #self.scrollframe.lines do
 					local line = self.scrollframe.lines [i]
@@ -976,6 +999,13 @@ local update_rows = function (self, updated_rows)
 		for i = 1, #row.button_available do
 			row.button_available[i]:Hide()
 		end
+
+		for i = #row.checkbox_inuse, 1, -1 do
+			tinsert (row.row.checkbox_available, tremove (row.checkbox_inuse, i))
+		end
+		for i = 1, #row.row.checkbox_available do
+			row.row.checkbox_available[i]:Hide()
+		end
 		
 		for i = #row.icon_inuse, 1, -1 do
 			tinsert (row.icon_available, tremove (row.icon_inuse, i))
@@ -1035,6 +1065,19 @@ local create_panel_entry = function (self, row)
 	editbox:SetTemplate (DF:GetTemplate ("dropdown", "OPTIONS_DROPDOWN_TEMPLATE"))
 	
 	tinsert (row.entry_available, editbox)
+end
+
+local create_panel_checkbox = function (self, row)
+	--row.checkbox_available
+	row.checkbox_total = row.checkbox_total + 1
+
+	local switch = DF:NewSwitch (row, nil, "$parentCheckBox" .. row.checkbox_total, nil, 20, 20, nil, nil, false)
+	switch:SetAsCheckBox()
+
+	switch:SetHook ("OnEnter", button_on_enter)
+	switch:SetHook ("OnLeave", button_on_leave)
+
+	tinsert (row.checkbox_available, switch)
 end
 
 local create_panel_button = function (self, row)
@@ -1131,6 +1174,7 @@ function DF:NewFillPanel (parent, rows, name, member, w, h, total_lines, fill_ro
 	panel.CreateRowText = create_panel_text
 	panel.CreateRowEntry = create_panel_entry
 	panel.CreateRowButton = create_panel_button
+	panel.CreateCheckbox = create_panel_checkbox
 	panel.CreateRowIcon = create_panel_icon
 	panel.CreateRowTexture = create_panel_texture
 	panel.SetFillFunction = set_fill_function
@@ -1198,7 +1242,14 @@ function DF:NewFillPanel (parent, rows, name, member, w, h, total_lines, fill_ro
 								entrywidget:SetCursorPosition(0)
 								
 								entrywidget:Show()
-								
+							
+							elseif (t.type == "checkbox") then
+								local checkboxwidget = row.checkbox_inuse [button]
+								checkbox = checkbox + 1
+								checkboxwidget.index = real_index
+
+								checkboxwidget:SetValue(results [index])
+
 							elseif (t.type == "button") then
 								local buttonwidget = row.button_inuse [button]
 								button = button + 1
@@ -1346,6 +1397,10 @@ function DF:NewFillPanel (parent, rows, name, member, w, h, total_lines, fill_ro
 			row.button_inuse = {}
 			row.button_total = 0
 			
+			row.checkbox_available = {}
+			row.checkbox_inuse = {}
+			row.checkbox_total = 0
+
 			row.icon_available = {}
 			row.icon_inuse = {}
 			row.icon_total = 0
