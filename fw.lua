@@ -1,5 +1,5 @@
 
-local dversion = 185
+local dversion = 187
 
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary (major, minor)
@@ -3317,6 +3317,21 @@ function DF_CALC_PERFORMANCE()
 		F:SetScript ("OnUpdate", nil)
 	end)
 end
+
+DF.ClassIndexToFileName = {
+	[6] = "DEATHKNIGHT",
+	[1] = "WARRIOR",
+	[4] = "ROGUE",
+	[8] = "MAGE",
+	[5] = "PRIEST",
+	[3] = "HUNTER",
+	[9] = "WARLOCK",
+	[12] = "DEMONHUNTER",
+	[7] = "SHAMAN",
+	[11] = "DRUID",
+	[10] = "MONK",
+	[2] = "PALADIN",
+}
 
 DF.ClassFileNameToIndex = {
 	["DEATHKNIGHT"] = 6,
