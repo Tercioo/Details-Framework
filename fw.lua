@@ -1216,16 +1216,16 @@ end
 					local slider = getMenuWidgetVolative(parent, "slider", widgetIndexes)
 					widget_created = slider
 
-					slider.slider:SetMinMaxValues (widget_table.min, widget_table.max)
-					slider.slider:SetValue (widget_table.get())
-					slider.ivalue = slider.slider:GetValue()
-
 					if (widget_table.usedecimals) then
 						slider.slider:SetValueStep (0.01)
 					else
 						slider.slider:SetValueStep (widget_table.step)
 					end
 					slider.useDecimals = widget_table.usedecimals
+
+					slider.slider:SetMinMaxValues (widget_table.min, widget_table.max)
+					slider.slider:SetValue (widget_table.get())
+					slider.ivalue = slider.slider:GetValue()
 
 					slider:SetTemplate(slider_template)
 
