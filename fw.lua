@@ -1,5 +1,5 @@
 
-local dversion = 187
+local dversion = 188
 
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary (major, minor)
@@ -3901,16 +3901,15 @@ end
 do    
     local get = function(self)
         local object = tremove(self.notUse, #self.notUse)
-        if (object) then
+		if (object) then
             tinsert(self.inUse, object)
 			return object, false
-			
         else
             --need to create the new object
-            local newObject = self.newObjectFunc(self, unpack(self.payload))
+			local newObject = self.newObjectFunc(self, unpack(self.payload))
             if (newObject) then
 				tinsert(self.inUse, newObject)
-				return object, true
+				return newObject, true
             end
         end
 	end
