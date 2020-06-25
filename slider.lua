@@ -25,7 +25,8 @@ do
 		HasHook = DF.HasHook,
 		ClearHooks = DF.ClearHooks,
 		RunHooksForWidget = DF.RunHooksForWidget,
-		dversion = DF.dversion
+
+		dversion = DF.dversion,
 	}
 
 	--check if there's a metaPrototype already existing
