@@ -1,5 +1,5 @@
 
-local dversion = 188
+local dversion = 189
 
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary (major, minor)
@@ -26,6 +26,8 @@ local UnitIsTapDenied = UnitIsTapDenied
 
 SMALL_NUMBER = 0.000001
 ALPHA_BLEND_AMOUNT = 0.8400251
+
+DF.dversion = dversion
 
 DF.AuthorInfo = {
 	Name = "Terciob",
