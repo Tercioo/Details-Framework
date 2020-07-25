@@ -6948,7 +6948,6 @@ end
 ]]
 
 function DF:BuildStatusbarAuthorInfo (f, addonBy, authorsNameString)
-
 	local authorName = DF:CreateLabel (f, "" .. (addonBy or "An addon by") .. "|cFFFFFFFF" .. (authorsNameString or "Terciob") .. "|r")
 	authorName.textcolor = "silver"
 	local discordLabel = DF:CreateLabel (f, "Discord: ")
@@ -6973,6 +6972,9 @@ function DF:BuildStatusbarAuthorInfo (f, addonBy, authorsNameString)
 		discordTextEntry:HighlightText()
 	end)
 
+	f.authorName = authorName
+	f.discordLabel = discordLabel
+	f.discordTextEntry = discordTextEntry
 end
 
 local statusbar_default_options = {
@@ -9736,7 +9738,7 @@ function DF:CreateTimeLineFrame (parent, name, options, timelineOptions)
 		horizontalSlider:SetValue (0)
 		horizontalSlider:SetScript ("OnValueChanged", function (self)
 			local _, maxValue = horizontalSlider:GetMinMaxValues()
-			local stepValue = ceil (ceil(self:GetValue() * maxValue)/maxValue)
+			local stepValue = ceil (ceil(self:GetValue() * maxValue) / max(maxValue, SMALL_FLOAT))
 			if (stepValue ~= horizontalSlider.currentValue) then
 				horizontalSlider.currentValue = stepValue
 				frameCanvas:SetHorizontalScroll (stepValue)
