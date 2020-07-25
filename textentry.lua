@@ -245,6 +245,18 @@ DF.TextEntryCounter = DF.TextEntryCounter or 1
 		end
 	end
 
+	function TextEntryMetaFunctions:SetBackdrop(...)
+		return self.editbox:SetBackdrop(...)
+	end
+
+	function TextEntryMetaFunctions:SetBackdropColor(...)
+		return self.editbox:SetBackdropColor(...)
+	end
+
+	function TextEntryMetaFunctions:SetBackdropBorderColor(...)
+		return self.editbox:SetBackdropBorderColor(...)
+	end
+
 --> select all text
 	function TextEntryMetaFunctions:SelectAll()
 		self.editbox:HighlightText()
@@ -608,7 +620,7 @@ function DF:NewTextEntry (parent, container, name, member, w, h, func, param1, p
 		TextEntryObject.container = container
 		TextEntryObject.have_tooltip = nil
 
-	TextEntryObject.editbox = CreateFrame ("EditBox", name, parent)
+	TextEntryObject.editbox = CreateFrame ("EditBox", name, parent,"BackdropTemplate")
 	TextEntryObject.editbox:SetSize (232, 20)
 	TextEntryObject.editbox:SetBackdrop ({bgFile = [["Interface\DialogFrame\UI-DialogBox-Background"]], tileSize = 64, tile = true, edgeFile = [[Interface\DialogFrame\UI-DialogBox-Border]], edgeSize = 10, insets = {left = 1, right = 1, top = 0, bottom = 0}})
 	
@@ -1111,17 +1123,17 @@ function DF:NewSpecialLuaEditorEntry (parent, w, h, member, name, nointent, show
 		name = name:gsub ("$parent", parentName)
 	end
 	
-	local borderframe = CreateFrame ("Frame", name, parent)
+	local borderframe = CreateFrame ("Frame", name, parent,"BackdropTemplate")
 	borderframe:SetSize (w, h)
 	
 	if (member) then
 		parent [member] = borderframe
 	end
 	
-	local scrollframe = CreateFrame ("ScrollFrame", name, borderframe, "UIPanelScrollFrameTemplate")
-	local scrollframeNumberLines = CreateFrame ("ScrollFrame", name .. "NumberLines", borderframe, "UIPanelScrollFrameTemplate")
+	local scrollframe = CreateFrame ("ScrollFrame", name, borderframe, "UIPanelScrollFrameTemplate, BackdropTemplate")
+	local scrollframeNumberLines = CreateFrame ("ScrollFrame", name .. "NumberLines", borderframe, "UIPanelScrollFrameTemplate, BackdropTemplate")
 
-	scrollframe.editbox = CreateFrame ("editbox", "$parentEditBox", scrollframe)
+	scrollframe.editbox = CreateFrame ("editbox", "$parentEditBox", scrollframe,"BackdropTemplate")
 	scrollframe.editbox:SetMultiLine (true)
 	scrollframe.editbox:SetAutoFocus (false)
 	scrollframe.editbox:SetScript ("OnCursorChanged", _G.ScrollingEdit_OnCursorChanged)
@@ -1131,7 +1143,7 @@ function DF:NewSpecialLuaEditorEntry (parent, w, h, member, name, nointent, show
 
 	--line number
 	if (showLineNumbers) then
-		scrollframeNumberLines.editbox = CreateFrame ("editbox", "$parentLineNumbers", scrollframeNumberLines)
+		scrollframeNumberLines.editbox = CreateFrame ("editbox", "$parentLineNumbers", scrollframeNumberLines, "BackdropTemplate")
 		scrollframeNumberLines.editbox:SetMultiLine (true)
 		scrollframeNumberLines.editbox:SetAutoFocus (false)
 		scrollframeNumberLines.editbox:SetEnabled (false)

@@ -1,12 +1,12 @@
 
-local dversion = 192
+local dversion = 193
 
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary (major, minor)
 
 if (not DF) then
 	DetailsFrameworkCanLoad = false
-	return 
+	return
 end
 
 DetailsFrameworkCanLoad = true
@@ -1059,7 +1059,7 @@ end
 
 	--volatile menu can be called several times, each time all settings are reset and a new menu is built using the same widgets
 	function DF:BuildMenuVolatile (parent, menu, x_offset, y_offset, height, use_two_points, text_template, dropdown_template, switch_template, switch_is_box, slider_template, button_template, value_change_hook)
-
+		
 		if (not parent.widget_list) then
 			DF:SetAsOptionsPanel (parent)
 		end
@@ -1095,20 +1095,18 @@ end
 					local label = getMenuWidgetVolative(parent, "label", widgetIndexes)
 					widget_created = label
 
+					label.text = widget_table.get() or widget_table.text or ""
+					label.color = widget_table.color
+
+					if (widget_table.font) then
+						label.fontface = widget_table.font
+					end
+
 					if (widget_table.text_template or text_template) then
 						label:SetTemplate(widget_table.text_template or text_template)
 					else
 						label.fontsize = widget_table.size or 10
 					end
-					
-					if (label.fontface) then
-						label.fontface = widget_table.font or "GameFontHighlightSmall"
-					end
-					if (widget_table.color) then
-						label.fontcolor = widget_table.color
-					end
-					
-					label.text = widget_table.get() or widget_table.text or ""
 
 					label._get = widget_table.get
 					label.widget_type = "label"
@@ -1223,7 +1221,6 @@ end
 					else
 						slider.slider:SetValueStep (widget_table.step)
 					end
-					slider.useDecimals = widget_table.usedecimals
 
 					slider.slider:SetMinMaxValues (widget_table.min, widget_table.max)
 					slider.slider:SetValue (widget_table.get())
@@ -1374,10 +1371,7 @@ end
 					textentry:SetPoint ("left", textentry.hasLabel, "right", 2)
 					textentry.hasLabel:SetPoint (cur_x, cur_y)
 
-					if (value_change_hook) then
-						textentry:SetHook("OnEnterPressed", value_change_hook)
-						textentry:SetHook("OnEditFocusLost", value_change_hook)
-					end
+					--> text entry doesn't trigger global callback
 					
 					--> hook list
 					if (widget_table.hooks) then
@@ -2051,6 +2045,8 @@ function DF:GetBestFontForLanguage (language, western, cyrillic, china, korean, 
 	end
 end
 
+--DF.font_templates ["ORANGE_FONT_TEMPLATE"] = {color = "orange", size = 11, font = "Accidental Presidency"}
+--DF.font_templates ["OPTIONS_FONT_TEMPLATE"] = {color = "yellow", size = 12, font = "Accidental Presidency"}
 DF.font_templates ["ORANGE_FONT_TEMPLATE"] = {color = "orange", size = 11, font = DF:GetBestFontForLanguage()}
 DF.font_templates ["OPTIONS_FONT_TEMPLATE"] = {color = "yellow", size = 12, font = DF:GetBestFontForLanguage()}
 
@@ -3093,9 +3089,11 @@ function DF:ReskinSlider (slider, heightOffset)
 		slider.cima:GetPushedTexture():SetPoint ("center", slider.cima, "center", 1, 1)
 		slider.cima:GetDisabledTexture():SetPoint ("center", slider.cima, "center", 1, 1)
 		slider.cima:SetSize (16, 16)
+		--[=[
 		slider.cima:SetBackdrop ({edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1, bgFile = [[Interface\AddOns\Details\images\background]]})
 		slider.cima:SetBackdropColor (0, 0, 0, 0.3)
 		slider.cima:SetBackdropBorderColor (0, 0, 0, 1)
+		]=]
 		
 		slider.baixo:SetNormalTexture ([[Interface\Buttons\Arrow-Down-Up]])
 		slider.baixo:SetPushedTexture ([[Interface\Buttons\Arrow-Down-Down]])
@@ -3107,6 +3105,7 @@ function DF:ReskinSlider (slider, heightOffset)
 		slider.baixo:GetPushedTexture():SetPoint ("center", slider.baixo, "center", 1, -5)
 		slider.baixo:GetDisabledTexture():SetPoint ("center", slider.baixo, "center", 1, -5)
 		slider.baixo:SetSize (16, 16)
+		--[=[
 		slider.baixo:SetBackdrop ({edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1, bgFile = [[Interface\AddOns\Details\images\background]]})
 		slider.baixo:SetBackdropColor (0, 0, 0, 0.35)
 		slider.baixo:SetBackdropBorderColor (0, 0, 0, 1)
@@ -3114,6 +3113,7 @@ function DF:ReskinSlider (slider, heightOffset)
 		slider.slider:SetBackdrop ({edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1, bgFile = [[Interface\AddOns\Details\images\background]]})
 		slider.slider:SetBackdropColor (0, 0, 0, 0.35)
 		slider.slider:SetBackdropBorderColor (0, 0, 0, 1)
+		]=]
 		
 		--slider.slider:Altura (164)
 		slider.slider:cimaPoint (0, 13)
@@ -3152,10 +3152,11 @@ function DF:ReskinSlider (slider, heightOffset)
 			disabledTexture:SetPoint ("bottomright", slider.ScrollBar.ScrollUpButton, "bottomright", offset, 0)
 			
 			slider.ScrollBar.ScrollUpButton:SetSize (16, 16)
+			--[=[
 			slider.ScrollBar.ScrollUpButton:SetBackdrop ({edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1, bgFile = "Interface\\Tooltips\\UI-Tooltip-Background"})
 			slider.ScrollBar.ScrollUpButton:SetBackdropColor (0, 0, 0, 0.3)
 			slider.ScrollBar.ScrollUpButton:SetBackdropBorderColor (0, 0, 0, 1)
-			
+			]=]
 			--it was having problems with the texture anchor when calling ClearAllPoints() and setting new points different from the original
 			--now it is using the same points from the original with small offsets tp align correctly
 		end
@@ -3185,9 +3186,11 @@ function DF:ReskinSlider (slider, heightOffset)
 			disabledTexture:SetPoint ("bottomright", slider.ScrollBar.ScrollDownButton, "bottomright", offset, -4)
 			
 			slider.ScrollBar.ScrollDownButton:SetSize (16, 16)
+			--[=[
 			slider.ScrollBar.ScrollDownButton:SetBackdrop ({edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1, bgFile = "Interface\\Tooltips\\UI-Tooltip-Background"})
 			slider.ScrollBar.ScrollDownButton:SetBackdropColor (0, 0, 0, 0.3)
 			slider.ScrollBar.ScrollDownButton:SetBackdropBorderColor (0, 0, 0, 1)
+			]=]
 
 			--<Anchor point="TOP" relativePoint="BOTTOM"/>
 			--slider.ScrollBar.ScrollDownButton:SetPoint ("top", slider.ScrollBar, "bottom", 0, 0)
@@ -3207,10 +3210,11 @@ function DF:ReskinSlider (slider, heightOffset)
 		slider.ScrollBar.ThumbTexture:SetSize (12, 8)
 		
 		--
-		
+		--[=[
 		slider.ScrollBar:SetBackdrop ({edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1, bgFile = "Interface\\Tooltips\\UI-Tooltip-Background"})
 		slider.ScrollBar:SetBackdropColor (0, 0, 0, 0.35)
 		slider.ScrollBar:SetBackdropBorderColor (0, 0, 0, 1)
+		]=]
 	end
 end
 
@@ -3334,6 +3338,7 @@ DF.ClassIndexToFileName = {
 	[10] = "MONK",
 	[2] = "PALADIN",
 }
+
 
 DF.ClassFileNameToIndex = {
 	["DEATHKNIGHT"] = 6,
@@ -3903,12 +3908,13 @@ end
 do    
     local get = function(self)
         local object = tremove(self.notUse, #self.notUse)
-		if (object) then
+        if (object) then
             tinsert(self.inUse, object)
 			return object, false
+			
         else
             --need to create the new object
-			local newObject = self.newObjectFunc(self, unpack(self.payload))
+            local newObject = self.newObjectFunc(self, unpack(self.payload))
             if (newObject) then
 				tinsert(self.inUse, newObject)
 				return newObject, true
