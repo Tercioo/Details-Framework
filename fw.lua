@@ -1,5 +1,5 @@
 
-local dversion = 194
+local dversion = 196
 
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary (major, minor)
@@ -1641,14 +1641,19 @@ end
 				button.tooltip = widget_table.desc
 				button.widget_type = "execute"
 				
-				--> execute doesn't trigger global callback
+				--notice: execute doesn't trigger global callback
 				
-				--> hook list
+				--button icon
+				if (widget_table.icontexture) then
+					button:SetIcon(widget_table.icontexture, nil, nil, nil, widget_table.icontexcoords, nil, nil, 2)
+				end
+
+				--hook list
 				if (widget_table.hooks) then
 					for hookName, hookFunc in pairs (widget_table.hooks) do
 						button:SetHook (hookName, hookFunc)
 					end
-				end				
+				end
 
 				if (widget_table.id) then
 					parent.widgetids [widget_table.id] = button
