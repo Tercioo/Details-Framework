@@ -6237,8 +6237,8 @@ function DF:OpenLoadConditionsPanel (optionsTable, callback, frameOptions)
 			pvptalent = {x2StartAt, -70},
 			group = {x2StartAt, -210},
 			affix = {x2StartAt, -270},
-			encounter_ids = {x2StartAt, -360},
-			map_ids = {x2StartAt, -400},
+			encounter_ids = {x2StartAt, -400},
+			map_ids = {x2StartAt, -440},
 		}
 		
 		local editingLabel = DF:CreateLabel (f, "Load Conditions For:")
