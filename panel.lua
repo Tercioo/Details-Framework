@@ -9436,7 +9436,7 @@ DF.TimeLineBlockFunctions = {
 		else
 			self.icon:SetTexture (nil)
 			self.text:SetText (lineData.text or "")
-			text:SetPoint ("left", self, "left", 2, 0)
+			self.text:SetPoint ("left", self, "left", 2, 0)
 		end
 		
 		if (self.dataIndex % 2 == 1) then
@@ -9446,12 +9446,14 @@ DF.TimeLineBlockFunctions = {
 			self:SetBackdropColor (r, g, b, a)
 		end
 		
-		self:SetWidth (5000)
+		self:SetWidth(5000)
 		
 		local timelineData = lineData.timeline
 		local spellId = lineData.spellId
 		local useIconOnBlock = data.useIconOnBlocks
 		
+		local baseFrameLevel = parent:GetFrameLevel() + 10
+
 		for i = 1, #timelineData do
 			local blockInfo = timelineData [i]
 			
@@ -9460,6 +9462,8 @@ DF.TimeLineBlockFunctions = {
 			local isAura = blockInfo [3]
 			local auraDuration = blockInfo [4]
 
+			local payload = blockInfo.payload
+
 			local xOffset = pixelPerSecond * time
 			local width = pixelPerSecond * length
 			
@@ -9467,13 +9471,16 @@ DF.TimeLineBlockFunctions = {
 				xOffset = xOffset / 2.5
 			end
 			
-			local block = self:GetBlock (i)
+			local block = self:GetBlock(i)
 			block:Show()
-			PixelUtil.SetPoint (block, "left", self, "left", xOffset + headerWidth, 0)
+			block:SetFrameLevel(baseFrameLevel + i)
+
+			PixelUtil.SetPoint(block, "left", self, "left", xOffset + headerWidth, 0)
 
 			block.info.spellId = spellId
 			block.info.time = time
 			block.info.duration = auraDuration
+			block.info.payload = payload
 			
 			if (useIconOnBlock) then
 				block.icon:SetTexture (lineData.icon)
