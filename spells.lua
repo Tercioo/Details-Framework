@@ -787,93 +787,66 @@ end
 --consumables
 
 DF.FlaskIDs = {
-	[251836] = true, -- Flask of the Currents agility
-	[251837] = true, -- Flask of Endless Fathoms intellect
-	[251838] = true, -- Flask of the Vast Horizon stamina
-	[251839] = true, -- Flask of the Undertow strength
+	--Shadowlands
+	[307185] = true, --Spectral Flask of Power
+	[307187] = true, --Spectral Stamina Flask
+	[307166] = true, --Eternal Flask
 
-	------------------------------------------------------------------------
-	--revision ny nullKomplex july 07 2019
-	[298836] = true, -- Greater Flask of the Currents agility
-	[298837] = true, -- Greater Flask of Endless Fathoms intellect
-	[298839] = true, -- Greater Flask of the Vast Horizon stamina
-	[298841] = true, -- Greater Flask of the Undertow strength
+
+
 }
 
 DF.FoodIDs = {
-	[257422] = 41, --Mon'Dazi versatility
-	[257413] = 41, --Ravenberry Tarts haste
-	[257418] = 41, --Loa Loaf mastery
-	[257408] = 41, --Kul Tiramisu critical
-	
-	[257424] =  55, --Spiced Snapper versatility
-	[257415] =  55, --Swamp Fish 'n Chips haste
-	[257420] =  55, --Sailor's Pie mastery
-	[257410] =  55, --Honey-Glazed Haunches critical
-	
-	[259448] = 75, --Galley Banquet agility
-	[259449] = 75, --Galley Banquet intellect
-	[259453] = 75, --Galley Banquet stamina
-	[259452] = 75, --Galley Banquet strength
-
-	[259454] = 100, --Bountiful Captain's Feast agility
-	[259455] = 100, --Bountiful Captain's Feast intellect
-	[259457] = 100, --Bountiful Captain's Feast stamina
-	[257427] = 100, --Bountiful Captain's Feast strength
-	
-	------------------------------------------------------------------------
-	--revision ny nullKomplex july 07 2019
-	[288074] = 113, -- Wild Berry Bread stamina (maybe fake it as 41?)
-
-	[285721] = 60, -- Druid Rebirth trait agility
-	[285719] = 60, -- Druid Rebirth trait intellect
-	[285720] = 60, -- Druid Rebirth trait strength
-
-	-- Put in 70 section:
-	[288075] = 150, -- Seasoned Steak and Potatoes (70?)
-
-	[290467] = 85, -- Boralus Blood Sausage agility
-	[290468] = 85, -- Boralus Blood Sausage intellect
-	[290469] = 85, -- Boralus Blood Sausage strength
-
-	[297037] =  93, -- Bil'Tong versatility
-	[297034] =  93, -- Baked Port Tato haste
-	[297035] =  93, -- Abyssal-Fried Rissole mastery
-	[297039] =  93, -- Mech-Dowel's "Big Mech" critical
-	[297040] =  198, -- Fragrant Kakavia stamina (93?)
-
-	[297116] = 131, -- Famine Evaluator And Snack Table agility
-	[297117] = 131, -- Famine Evaluator And Snack Table intellect
-	[297118] = 131, -- Famine Evaluator And Snack Table strength
+	[259454] = true, -- (agility) Feast of Gluttonous Hedonism
+	[308434] = true, -- (critical) Phantasmal Souffle and Fries
+	[308488] = true, -- (haste) Tenebrous Crown Roast Aspic
+	[308506] = true, -- (mastery) Crawler Ravioli with Apple Sauce
+	[308525] = true, -- (stamina) Banana Beef Pudding
+	[308514] = true, -- (versatility) Steak a la Mode
+	[327851] = true, -- (periodicaly heal out of combat) Seraph Tenders
+	[308637] = true, -- (periodicaly damage) Smothered Shank
+	[327715] = true, -- (speed) Fried Bonefish
 }
 
 DF.PotionIDs = {
-	[279152] = true, --Battle Potion of Agility
-	[279151] = true, --Battle Potion of Intellect
-	[279154] = true, --Battle Potion of Stamina
-	[279153] = true, --Battle Potion of Strength
-	
-	[269853] = true, --Potion of Rising Death (range)
-	[251316] = true, --Potion of Bursting Blood (melee)
-	[251231] = true, --Steelskin Potion (tank)
-	
-	------------------------------------------------------------------------
-	--revision ny nullKomplex july 07 2019
-	[298146] = true, -- Superior Battle Potion of Agility
-	[298152] = true, -- Superior Battle Potion of Intellect
-	[298153] = true, -- Superior Battle Potion of Stamina
-	[298154] = true, -- Superior Battle Potion of Strength
+	--Shadowlands
+	[307159] = true, --Potion of Spectral Agility
+	[307163] = true, --Potion of Spectral Stamina
+	[307164] = true, --Potion of Spectral Strength
+	[307160] = true, --Potion of Hardened Shadows
+	[307162] = true, --Potion of Spectral Intellect
+	[307494] = true, --Potion of Empowered Exorcisms
+	[307495] = true, --Potion of Phantom Fire
+	[307496] = true, --Potion of Divine Awakening
+	[307161] = true, --Potion of Spiritual Clarity
+	[307496] = true, --Potion of Divine Awakening
+	[307501] = true, --Potion of Specter Swiftness
+	[322302] = true, --Potion of Sacrificial Anima
+	[307497] = true, --Potion of Deathly Fixation
+	[307195] = true, --Potion of the Hidden Spirit
+	[307199] = true, --Potion of Soul Purity
+	[307196] = true, --Potion of Shadow Sight
+	[307192] = true, --Spiritual Healing Potion
+	[307194] = true, --Spiritual Rejuvenation Potion
+	[307193] = true, --Spiritual Mana Potion
+	[323436] = true, --Purify Soul (greek convent)
+--	[] = true, --
 
-	[298317] = true, -- Potion of Focused Resolve (crit)
-	[300714] = true, -- Potion of Unbridled Fury (fire damage)
-	[298225] = true, -- Potion of Empowered Proximity (main stat per enemy)
-	[298155] = true, -- Superior Steelskin Potion (tank)
-	[300741] = true, -- Potion of Wild Mending (healer)
+	[307165] = true, --Spiritual Anti-Venom
+
+
+}
+
+DF.FeastIDs = {
+	[308462] = true, --Feast of Gluttonous Hedonism
+	[307153] = true, --Eternal Cauldron
+
+
+
 }
 
 DF.RuneIDs = {
-	[270058] = true, --Battle-Scarred Augment Rune
-	[317065] = true, --Lightning-Forged Augment Rune
+
 }
 
 --	/dump UnitAura ("player", 1)
