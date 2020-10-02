@@ -1,5 +1,5 @@
 
-local dversion = 207
+local dversion = 208
 
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary (major, minor)
@@ -4039,7 +4039,7 @@ do
 
 	--return the amount of objects 
 		local getamount = function(self)
-			return #self.notUse + #self.inUse
+			return #self.notUse + #self.inUse, #self.notUse, #self.inUse
 		end
     
     local poolMixin = {
