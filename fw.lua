@@ -1,5 +1,5 @@
 
-local dversion = 208
+local dversion = 209
 
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary (major, minor)
@@ -2781,6 +2781,7 @@ local glow_overlay_play = function (self)
 		self.animOut:Stop()
 	end
 	if (not self.animIn:IsPlaying()) then
+		self.animIn:Stop()
 		self.animIn:Play()
 	end
 end
