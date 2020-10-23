@@ -1,6 +1,7 @@
 
 
-local dversion = 211
+local dversion = 212
+
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary (major, minor)
 
@@ -2049,7 +2050,7 @@ end
 			options_frame:SetPoint ("center", UIParent, "center")
 			
 			options_frame:SetBackdrop ({bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", tile = true, tileSize = 16,
-			edgeFile = DF.folder ..  "border_2", edgeSize = 32,
+			edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1,
 			insets = {left = 1, right = 1, top = 1, bottom = 1}})
 			options_frame:SetBackdropColor (0, 0, 0, .7)
 
