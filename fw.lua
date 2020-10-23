@@ -1,4 +1,5 @@
 
+
 local dversion = 212
 
 local major, minor = "DetailsFramework-1.0", dversion
@@ -1445,7 +1446,7 @@ end
 					line_widgets_created = 0
 					max_x = 0
 				end
-				
+
 				if widget_created then
 					widget_created:Show()
 				end
