@@ -4204,10 +4204,9 @@ end
 		end
 	}
 
-	function DF:SetEnvironment(func, environmentHandle)
+	function DF:SetEnvironment(func, environmentHandle, newEnvironment)
 		environmentHandle = environmentHandle or DF.DefaultSecureScriptEnvironmentHandle
-
-		local newEnvironment = {}
+		newEnvironment = newEnvironment or {}
 
 		setmetatable(newEnvironment, environmentHandle)
 		_G.setfenv(func, newEnvironment)
