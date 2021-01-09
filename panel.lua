@@ -6080,7 +6080,7 @@ function DF:PassLoadFilters (loadTable, encounterID)
 			canCheckTalents = false
 			
 			for _, specID in ipairs (specsForThisClass) do
-				if (loadTable.spec [specID]) then
+				if (loadTable.spec [specID] or loadTable.spec [specID..""]) then
 					--theres a talent for this class
 					canCheckTalents = true
 					break
@@ -6092,7 +6092,7 @@ function DF:PassLoadFilters (loadTable, encounterID)
 			local specIndex = DetailsFramework.GetSpecialization()
 			if (specIndex) then
 				local specID = DetailsFramework.GetSpecializationInfo (specIndex)
-				if (not loadTable.spec [specID]) then
+				if (not loadTable.spec [specID] or loadTable.spec [specID..""]) then
 					return false
 				end
 			else
@@ -6316,7 +6316,7 @@ function DF:OpenLoadConditionsPanel (optionsTable, callback, frameOptions)
 					name = specName,
 					set = f.OnRadioCheckboxClick,
 					param = specID,
-					get = function() return f.OptionsTable.spec [specID] end,
+					get = function() return f.OptionsTable.spec [specID] or f.OptionsTable.spec [specID..""] end,
 					texture = specIcon,
 				})
 			end
