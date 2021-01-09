@@ -5139,7 +5139,7 @@ DF.IconRowFunctions = {
 			newIconFrame.CountdownText:SetPoint (self.options.text_anchor or "center", newIconFrame, self.options.text_rel_anchor or "center", self.options.text_x_offset or 0, self.options.text_y_offset or 0)
 			newIconFrame.CountdownText:Hide()
 			
-			newIconFrame.StackText = cooldownFrame:CreateFontString (nil, "overlay", "GameFontNormal")
+			newIconFrame.StackText = newIconFrame:CreateFontString (nil, "overlay", "GameFontNormal")
 			--newIconFrame.StackText:SetPoint ("bottomright")
 			newIconFrame.StackText:SetPoint (self.options.stack_text_anchor or "center", newIconFrame, self.options.stack_text_rel_anchor or "bottomright", self.options.stack_text_x_offset or 0, self.options.stack_text_y_offset or 0)
 			newIconFrame.StackText:Hide()
