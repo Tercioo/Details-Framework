@@ -3550,7 +3550,7 @@ function DF:GetCharacterRaceList (fullList)
 		
 		local alliedRaceInfo = C_AlliedRaces.GetRaceInfoByID (i)
 		if (alliedRaceInfo and DF.AlliedRaceList [alliedRaceInfo.raceID]) then
-			tinsert (DF.RaceCache, {Name = alliedRaceInfo.name, FileString = alliedRaceInfo.raceFileString})
+			tinsert (DF.RaceCache, {Name = alliedRaceInfo.maleName, FileString = alliedRaceInfo.raceFileString})
 		end
 	end
 	
