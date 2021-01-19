@@ -10030,3 +10030,148 @@ function DF:SetPointOffsets(frame, xOffset, yOffset)
 	end
 end
 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--> list box
+
+DF.ListboxFunctions = {
+	scrollRefresh = function(self, data, offset, totalLines)
+		for i = 1, totalLines do
+			local index = i + offset
+			local lineData = data[index]
+			if (lineData) then
+				local line = self:GetLine(i)
+				for dataIndex = 1, #lineData do
+					line.widgets[dataIndex]:SetText(lineData[dataIndex])
+					line:Show()
+				end
+			end
+		end
+	end,
+
+--	scrollBox.lineHeight = lineHeight
+--	scrollBox.lineAmount = lineAmount
+
+	createScrollLine = function(self, index)
+		local line = CreateFrame("frame", self:GetName().. "line_" .. index, self, "BackdropTemplate")
+
+		line:SetPoint("topleft", self, "topleft", 1, -((index-1)*(self.lineHeight+1)) - 1)
+		line:SetSize(self:GetWidth() - 2, self.lineHeight)
+
+		local options = self:GetParent().options
+		line:SetBackdrop(options.line_backdrop)
+		line:SetBackdropColor(unpack(options.line_backdrop_color))
+
+		DF:Mixin(line, DF.HeaderFunctions)
+
+		line.widgets = {}
+
+		for i = 1, #self:GetParent().headerTable do
+			local headerColumn = self:GetParent().headerTable[i]
+
+			if (headerColumn.text) then
+				local textEntry = DF:CreateTextEntry(line, function()end, headerColumn.width, self.lineHeight, nil, nil, nil, DF:GetTemplate("dropdown", "OPTIONS_DROPDOWN_TEMPLATE"))
+				textEntry:SetHook("OnEditFocusGained", function() textEntry:HighlightText(0) end)
+				tinsert(line.widgets, textEntry)
+				line:AddFrameToHeaderAlignment(textEntry)
+			end
+		end
+
+		line:AlignWithHeader(self:GetParent().header, "left")
+		return line
+	end,
+}
+
+
+local listbox_options = {
+	width = 800,
+	height = 600,
+	line_height = 16,
+	line_backdrop = {bgFile = [[Interface\Tooltips\UI-Tooltip-Background]], tileSize = 64, tile = true},
+	line_backdrop_color = {.3, .3, .3, .8},
+}
+
+--@parent: parent frame
+--@name: name of the frame to be created
+--@data: table with current data to fill the column, this table are also used for values changed or added
+--@options: table with options to overwrite the default setting from 'listbox_options'
+--@header: a table to create a header widget
+--@header_options: a table with options to overwrite the default header options
+function DF:CreateListBox(parent, name, data, options, headerTable, headerOptions)
+
+	options = options or {}
+	local width = options.width or listbox_options.width
+	local height = options.height or listbox_options.height
+
+	name = name or "ListboxUnamed_" .. (math.random(100000, 1000000))
+
+	--canvas
+	local frameCanvas = CreateFrame("scrollframe", name, parent, "BackdropTemplate")
+	DF:Mixin(frameCanvas, DF.ListboxFunctions)
+	DF:Mixin(frameCanvas, DF.OptionsFunctions)
+	DF:Mixin(frameCanvas, DF.LayoutFrame)
+	frameCanvas.headerTable = headerTable
+
+	if (not data or type(data) ~= "table") then
+		error("CreateListBox() parameter 3 'data' must be a table.")
+	end
+
+	frameCanvas.data = data
+	frameCanvas.lines = {}
+	frameCanvas:SetSize(width, height)
+	DF:ApplyStandardBackdrop(frameCanvas)
+	frameCanvas:BuildOptionsTable(listbox_options, options)
+
+	--> header
+		--check for default values in the header
+		headerTable = headerTable or {
+			{text = "Spell Name", width = 70},
+			{text = "Spell Id", width = 70},
+		}
+		headerOptions = headerOptions or {
+			padding = 2,
+		}
+
+		local header = DF:CreateHeader(frameCanvas, headerTable, headerOptions)
+		--set the header point
+		header:SetPoint("topleft", frameCanvas, "topleft", 5, -5)
+		frameCanvas.header = header
+
+	--> scroll frame
+		local lineHeight = frameCanvas.options.line_height
+		local lineAmount = floor(height / lineHeight)
+
+		local scrollBox = DF:CreateScrollBox(frameCanvas, "$parentScrollbox", frameCanvas.scrollRefresh, data, width-4, height-10, lineAmount, lineHeight)
+		scrollBox:SetPoint("topleft", header, "bottomleft", 0, -2)
+		scrollBox:SetPoint("topright", header, "bottomright", -20, -2) -- -20 for the scrollbar
+		DF:ReskinSlider(scrollBox)
+		scrollBox.lineHeight = lineHeight
+		scrollBox.lineAmount = lineAmount
+
+		for i = 1, lineAmount do
+			scrollBox:CreateLine(frameCanvas.createScrollLine)
+		end
+
+		scrollBox:Refresh()
+
+	local addLineButton
+
+	return frameCanvas
+end
+
+--[=[ -- test case
+
+local pframe = ListBoxTest or CreateFrame("frame", "ListBoxTest", UIParent)
+pframe:SetSize(900, 700)
+pframe:SetPoint("center")
+
+local data = {{254154, "spell name 1", 45}, {299154, "spell name 2", 05}, {354154, "spell name 3", 99}}
+local headerTable = {
+	{text = "spell id", width = 120},
+	{text = "spell name", width = 180},
+	{text = "number", width = 90},
+}
+local listbox = DetailsFramework:CreateListBox(pframe, "$parentlistbox", data, nil, headerTable, nil)
+listbox:SetPoint("topleft", pframe, "topleft", 10, -10)
+
+--]=]
+
