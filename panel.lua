@@ -10037,9 +10037,12 @@ DF.ListboxFunctions = {
 	scrollRefresh = function(self, data, offset, totalLines)
 		for i = 1, totalLines do
 			local index = i + offset
-			local lineData = data[index]
+			local lineData = data[index] --what is shown in the textentries, array
 			if (lineData) then
 				local line = self:GetLine(i)
+				line.dataIndex = index
+				line.deleteButton:SetClickFunction(DF.ListboxFunctions.deleteEntry, data, index)
+
 				for dataIndex = 1, #lineData do
 					line.widgets[dataIndex]:SetText(lineData[dataIndex])
 					line:Show()
@@ -10048,16 +10051,20 @@ DF.ListboxFunctions = {
 		end
 	end,
 
---	scrollBox.lineHeight = lineHeight
---	scrollBox.lineAmount = lineAmount
+	deleteEntry = function(self, button, data, index)
+		tremove(data, index)
+		--get the line, get the scrollframe
+		self:GetParent():GetParent():Refresh()
+	end,
 
 	createScrollLine = function(self, index)
+		local listBox = self:GetParent()
 		local line = CreateFrame("frame", self:GetName().. "line_" .. index, self, "BackdropTemplate")
 
 		line:SetPoint("topleft", self, "topleft", 1, -((index-1)*(self.lineHeight+1)) - 1)
-		line:SetSize(self:GetWidth() - 2, self.lineHeight)
+		line:SetSize(self:GetWidth() - 28, self.lineHeight) -- -28 space for the scrollbar
 
-		local options = self:GetParent().options
+		local options = listBox.options
 		line:SetBackdrop(options.line_backdrop)
 		line:SetBackdropColor(unpack(options.line_backdrop_color))
 
@@ -10065,10 +10072,15 @@ DF.ListboxFunctions = {
 
 		line.widgets = {}
 
-		for i = 1, #self:GetParent().headerTable do
-			local headerColumn = self:GetParent().headerTable[i]
+		for i = 1, #listBox.headerTable do
+			local headerColumn = listBox.headerTable[i]
 
-			if (headerColumn.text) then
+			if (headerColumn.isDelete) then
+				local deleteButton = DF:CreateButton(line, DF.ListboxFunctions.deleteEntry, 20, self.lineHeight, "X", listBox.data, index, nil, nil, nil, nil, DF:GetTemplate ("button", "OPTIONS_BUTTON_TEMPLATE"), DF:GetTemplate ("font", "ORANGE_FONT_TEMPLATE"))
+				line.deleteButton = deleteButton
+				line:AddFrameToHeaderAlignment(deleteButton)
+
+			elseif (headerColumn.text) then
 				local textEntry = DF:CreateTextEntry(line, function()end, headerColumn.width, self.lineHeight, nil, nil, nil, DF:GetTemplate("dropdown", "OPTIONS_DROPDOWN_TEMPLATE"))
 				textEntry:SetHook("OnEditFocusGained", function() textEntry:HighlightText(0) end)
 				tinsert(line.widgets, textEntry)
@@ -10076,7 +10088,7 @@ DF.ListboxFunctions = {
 			end
 		end
 
-		line:AlignWithHeader(self:GetParent().header, "left")
+		line:AlignWithHeader(listBox.header, "left")
 		return line
 	end,
 }
@@ -10085,6 +10097,7 @@ DF.ListboxFunctions = {
 local listbox_options = {
 	width = 800,
 	height = 600,
+	auto_width = true,
 	line_height = 16,
 	line_backdrop = {bgFile = [[Interface\Tooltips\UI-Tooltip-Background]], tileSize = 64, tile = true},
 	line_backdrop_color = {.3, .3, .3, .8},
@@ -10099,9 +10112,6 @@ local listbox_options = {
 function DF:CreateListBox(parent, name, data, options, headerTable, headerOptions)
 
 	options = options or {}
-	local width = options.width or listbox_options.width
-	local height = options.height or listbox_options.height
-
 	name = name or "ListboxUnamed_" .. (math.random(100000, 1000000))
 
 	--canvas
@@ -10117,7 +10127,6 @@ function DF:CreateListBox(parent, name, data, options, headerTable, headerOption
 
 	frameCanvas.data = data
 	frameCanvas.lines = {}
-	frameCanvas:SetSize(width, height)
 	DF:ApplyStandardBackdrop(frameCanvas)
 	frameCanvas:BuildOptionsTable(listbox_options, options)
 
@@ -10131,18 +10140,42 @@ function DF:CreateListBox(parent, name, data, options, headerTable, headerOption
 			padding = 2,
 		}
 
+		tinsert(headerTable, {text = "Delete", width = 50, isDelete = true}) --isDelete signals the createScrollLine() to make the delete button for the line 
+
 		local header = DF:CreateHeader(frameCanvas, headerTable, headerOptions)
 		--set the header point
 		header:SetPoint("topleft", frameCanvas, "topleft", 5, -5)
 		frameCanvas.header = header
 
+	--> auto size
+		if (frameCanvas.options.auto_width) then
+			local width = 10 --padding 5 on each side
+			width = width + 20 --scrollbar reserved space
+			local headerPadding = headerOptions.padding or 0
+
+			for _, header in pairs(headerTable) do
+				if (header.width) then
+					width = width + header.width + headerPadding
+				end
+			end
+
+			frameCanvas.options.width = width
+			frameCanvas:SetWidth(width)
+		end
+
+		local width = frameCanvas.options.width
+		local height = frameCanvas.options.height
+
+		frameCanvas:SetSize(frameCanvas.options.width, height)
+
 	--> scroll frame
 		local lineHeight = frameCanvas.options.line_height
 		local lineAmount = floor(height / lineHeight)
 
-		local scrollBox = DF:CreateScrollBox(frameCanvas, "$parentScrollbox", frameCanvas.scrollRefresh, data, width-4, height-10, lineAmount, lineHeight)
+		-- -12 is padding: 5 on top, 7 bottom, 2 header scrollbar blank space
+		local scrollBox = DF:CreateScrollBox(frameCanvas, "$parentScrollbox", frameCanvas.scrollRefresh, data, width-4, height - header:GetHeight() - 12, lineAmount, lineHeight)
 		scrollBox:SetPoint("topleft", header, "bottomleft", 0, -2)
-		scrollBox:SetPoint("topright", header, "bottomright", -20, -2) -- -20 for the scrollbar
+		scrollBox:SetPoint("topright", header, "bottomright", 0, -2) -- -20 for the scrollbar
 		DF:ReskinSlider(scrollBox)
 		scrollBox.lineHeight = lineHeight
 		scrollBox.lineAmount = lineAmount
@@ -10160,18 +10193,19 @@ end
 
 --[=[ -- test case
 
-local pframe = ListBoxTest or CreateFrame("frame", "ListBoxTest", UIParent)
-pframe:SetSize(900, 700)
-pframe:SetPoint("center")
-
-local data = {{254154, "spell name 1", 45}, {299154, "spell name 2", 05}, {354154, "spell name 3", 99}}
-local headerTable = {
-	{text = "spell id", width = 120},
-	{text = "spell name", width = 180},
-	{text = "number", width = 90},
-}
-local listbox = DetailsFramework:CreateListBox(pframe, "$parentlistbox", data, nil, headerTable, nil)
-listbox:SetPoint("topleft", pframe, "topleft", 10, -10)
+    local pframe = ListBoxTest or CreateFrame("frame", "ListBoxTest", UIParent)
+    pframe:SetSize(900, 700)
+    pframe:SetPoint("left")
+    
+    local data = {{254154, "spell name 1", 45}, {299154, "spell name 2", 05}, {354154, "spell name 3", 99}}
+    local headerTable = {
+        {text = "spell id", width = 120},
+        {text = "spell name", width = 180},
+        {text = "number", width = 90},
+    }
+    
+    local listbox = DetailsFramework:CreateListBox(pframe, "$parentlistbox", data, nil, headerTable, nil)
+    listbox:SetPoint("topleft", pframe, "topleft", 10, -10)
 
 --]=]
 
