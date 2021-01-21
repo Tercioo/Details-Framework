@@ -10043,12 +10043,27 @@ DF.ListboxFunctions = {
 				line.dataIndex = index
 				line.deleteButton:SetClickFunction(DF.ListboxFunctions.deleteEntry, data, index)
 
-				for dataIndex = 1, #lineData do
-					line.widgets[dataIndex]:SetText(lineData[dataIndex])
-					line:Show()
+				local amountEntries = #lineData
+				for o = 1, amountEntries do
+					local textEntry = line.widgets[o]
+					textEntry.dataTable = lineData
+					textEntry.dataTableIndex = o
+					local text = lineData[o]
+					textEntry:SetText(text)
 				end
 			end
 		end
+	end,
+
+	addEntry = function(self)
+		local frameCanvas = self:GetParent()
+		local data = frameCanvas.data
+		local newEntry = {}
+		for i = 1, frameCanvas.headerLength do
+			tinsert(newEntry, "")
+		end
+		tinsert(data, newEntry)
+		frameCanvas.scrollBox:Refresh()
 	end,
 
 	deleteEntry = function(self, button, data, index)
@@ -10072,7 +10087,7 @@ DF.ListboxFunctions = {
 
 		line.widgets = {}
 
-		for i = 1, #listBox.headerTable do
+		for i = 1, (listBox.headerLength+1) do --+1 to add the delete button
 			local headerColumn = listBox.headerTable[i]
 
 			if (headerColumn.isDelete) then
@@ -10081,8 +10096,16 @@ DF.ListboxFunctions = {
 				line:AddFrameToHeaderAlignment(deleteButton)
 
 			elseif (headerColumn.text) then
-				local textEntry = DF:CreateTextEntry(line, function()end, headerColumn.width, self.lineHeight, nil, nil, nil, DF:GetTemplate("dropdown", "OPTIONS_DROPDOWN_TEMPLATE"))
+				local template = DF.table.copy({}, DF:GetTemplate("dropdown", "OPTIONS_DROPDOWN_TEMPLATE"))
+				template.backdropcolor = {0.1, 0.1, 0.1, .7}
+				local textEntry = DF:CreateTextEntry(line, function()end, headerColumn.width, self.lineHeight, nil, nil, nil, template)
 				textEntry:SetHook("OnEditFocusGained", function() textEntry:HighlightText(0) end)
+				textEntry:SetHook("OnEditFocusLost", function()
+					textEntry:HighlightText(0, 0)
+					local text = textEntry.text
+					local dataTable = textEntry.dataTable
+					dataTable[textEntry.dataTableIndex] = text
+				end)
 				tinsert(line.widgets, textEntry)
 				line:AddFrameToHeaderAlignment(textEntry)
 			end
@@ -10140,8 +10163,13 @@ function DF:CreateListBox(parent, name, data, options, headerTable, headerOption
 			padding = 2,
 		}
 
+		--each header is an entry in the data, if the header has 4 indexes the data has sub tables with 4 indexes as well
+		frameCanvas.headerLength = #headerTable
+
+		--add the detele line column into the header frame
 		tinsert(headerTable, {text = "Delete", width = 50, isDelete = true}) --isDelete signals the createScrollLine() to make the delete button for the line 
 
+		
 		local header = DF:CreateHeader(frameCanvas, headerTable, headerOptions)
 		--set the header point
 		header:SetPoint("topleft", frameCanvas, "topleft", 5, -5)
@@ -10172,13 +10200,14 @@ function DF:CreateListBox(parent, name, data, options, headerTable, headerOption
 		local lineHeight = frameCanvas.options.line_height
 		local lineAmount = floor(height / lineHeight)
 
-		-- -12 is padding: 5 on top, 7 bottom, 2 header scrollbar blank space
-		local scrollBox = DF:CreateScrollBox(frameCanvas, "$parentScrollbox", frameCanvas.scrollRefresh, data, width-4, height - header:GetHeight() - 12, lineAmount, lineHeight)
+		-- -12 is padding: 5 on top, 7 bottom, 2 header scrollbar blank space | -24 to leave space to the add button
+		local scrollBox = DF:CreateScrollBox(frameCanvas, "$parentScrollbox", frameCanvas.scrollRefresh, data, width-4, height - header:GetHeight() - 12 - 24, lineAmount, lineHeight)
 		scrollBox:SetPoint("topleft", header, "bottomleft", 0, -2)
 		scrollBox:SetPoint("topright", header, "bottomright", 0, -2) -- -20 for the scrollbar
 		DF:ReskinSlider(scrollBox)
 		scrollBox.lineHeight = lineHeight
 		scrollBox.lineAmount = lineAmount
+		frameCanvas.scrollBox = scrollBox
 
 		for i = 1, lineAmount do
 			scrollBox:CreateLine(frameCanvas.createScrollLine)
@@ -10186,7 +10215,9 @@ function DF:CreateListBox(parent, name, data, options, headerTable, headerOption
 
 		scrollBox:Refresh()
 
-	local addLineButton
+	--> add line button
+		local addLineButton = DF:CreateButton(frameCanvas, DF.ListboxFunctions.addEntry, 80, 20, "Add", nil, nil, nil, nil, nil, nil, DF:GetTemplate("button", "OPTIONS_BUTTON_TEMPLATE"), DF:GetTemplate("font", "ORANGE_FONT_TEMPLATE"))
+		addLineButton:SetPoint("topleft", scrollBox, "bottomleft", 0, -4)
 
 	return frameCanvas
 end
