@@ -10168,7 +10168,6 @@ function DF:CreateListBox(parent, name, data, options, headerTable, headerOption
 
 		--add the detele line column into the header frame
 		tinsert(headerTable, {text = "Delete", width = 50, isDelete = true}) --isDelete signals the createScrollLine() to make the delete button for the line 
-
 		
 		local header = DF:CreateHeader(frameCanvas, headerTable, headerOptions)
 		--set the header point
