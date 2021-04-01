@@ -1,6 +1,6 @@
 
 
-local dversion = 239
+local dversion = 241
 
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary (major, minor)
@@ -36,7 +36,7 @@ DF.AuthorInfo = {
 }
 
 if (not PixelUtil) then
-	--check if is in classic wow, if it is, build a replacement for PixelUtil
+	--check if is in classic or TBC wow, if it is, build a replacement for PixelUtil
 	local gameVersion = GetBuildInfo()
 	if (gameVersion:match("%d") == "1" or gameVersion:match("%d") == "2") then
 		PixelUtil = {
@@ -46,6 +46,10 @@ if (not PixelUtil) then
 			SetPoint = function (self, ...) self:SetPoint (...) end,
 		}
 	end
+end
+
+function DF.IsTimewalkWoW()
+	return DF.IsClassicWow() or DF.IsTBCWow()
 end
 
 function DF.IsClassicWow()
