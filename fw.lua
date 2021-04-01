@@ -1,6 +1,6 @@
 
 
-local dversion = 239
+local dversion = 240
 
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary (major, minor)
@@ -35,6 +35,7 @@ DF.AuthorInfo = {
 	Discord = "https://discord.gg/AGSzAZX",
 }
 
+local PixelUtil = PixelUtil or DFPixelUtil
 if (not PixelUtil) then
 	--check if is in classic wow, if it is, build a replacement for PixelUtil
 	local gameVersion = GetBuildInfo()
