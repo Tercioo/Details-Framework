@@ -35,6 +35,7 @@ DF.AuthorInfo = {
 	Discord = "https://discord.gg/AGSzAZX",
 }
 
+local PixelUtil = PixelUtil or DFPixelUtil
 if (not PixelUtil) then
 	--check if is in classic or TBC wow, if it is, build a replacement for PixelUtil
 	local gameVersion = GetBuildInfo()
