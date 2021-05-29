@@ -26,19 +26,12 @@ function DF.Schedules.NewTicker(time, callback, ...)
     local newTicker = C_Timer.NewTicker(time, triggerScheduledTick)
     newTicker.payload = payload
     newTicker.callback = callback
+    newTicker.expireAt = GetTime() + time
 
     --debug
     newTicker.path = debugstack()
     --
     return newTicker
-end
-
---cancel an ongoing ticker
-function DF.Schedules.Cancel(tickerObject)
-    --ignore if there's no ticker object
-    if (tickerObject) then
-        return tickerObject:Cancel()
-    end
 end
 
 --schedule a task with an interval of @time
@@ -47,12 +40,21 @@ function DF.Schedules.NewTimer(time, callback, ...)
     local newTimer = C_Timer.NewTimer(time, triggerScheduledTick)
     newTimer.payload = payload
     newTimer.callback = callback
+    newTimer.expireAt = GetTime() + time
 
     --debug
     newTimer.path = debugstack()
     --
 
     return newTimer
+end
+
+--cancel an ongoing ticker
+function DF.Schedules.Cancel(tickerObject)
+    --ignore if there's no ticker object
+    if (tickerObject) then
+        return tickerObject:Cancel()
+    end
 end
 
 --schedule a task with an interval of @time without payload
