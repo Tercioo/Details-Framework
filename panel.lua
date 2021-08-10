@@ -8537,7 +8537,7 @@ DF.CastFrameFunctions = {
 	UNIT_SPELLCAST_FAILED = function (self, unit, ...)
 		local unitID, castID, spellID = ...
 	
-		if (self.casting and castID == self.castID and not self.fadeOut) then
+		if ((self.casting or self.channeling) and castID == self.castID and not self.fadeOut) then
 			self.casting = nil
 			self.channeling = nil
 			self.failed = true
@@ -8558,7 +8558,7 @@ DF.CastFrameFunctions = {
 	UNIT_SPELLCAST_INTERRUPTED = function (self, unit, ...)
 		local unitID, castID, spellID = ...
 
-		if (self.casting and castID == self.castID and not self.fadeOut) then
+		if ((self.casting or self.channeling) and castID == self.castID and not self.fadeOut) then
 			self.casting = nil
 			self.channeling = nil
 			self.interrupted = true
