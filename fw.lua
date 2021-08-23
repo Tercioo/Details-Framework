@@ -1,6 +1,6 @@
 
 
-local dversion = 266
+local dversion = 267
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary (major, minor)
 
@@ -621,11 +621,11 @@ function DF:AddClassIconToText(text, playerName, class, useSpec, iconSize)
 		if (L) then
 			local imageSize = 128
 			classString = "|TInterface\\AddOns\\Details\\images\\classes_small:" .. size .. ":" .. size .. ":0:0:" .. imageSize .. ":" .. imageSize .. ":" .. (L * imageSize) .. ":" .. (R * imageSize) .. ":" .. (T * imageSize) .. ":" .. (B * imageSize) .. "|t"
-			return classString .. " " .. playerName
+			return classString .. " " .. text
 		end
 	end
 
-	return playerName
+	return text
 end
 
 function DF:GetFontSize (fontString)
