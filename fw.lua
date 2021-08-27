@@ -1,6 +1,6 @@
 
 
-local dversion = 268
+local dversion = 269
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary (major, minor)
 
@@ -430,6 +430,28 @@ function DF.table.dump (t, s, deep)
 	
 	return s
 end
+
+--grab a text and split it into lines adding each line to a indexed table
+function DF:SplitTextInLines(text)
+	local lines = {}
+	local position = 1
+	local startScope, endScope = text:find("\n", position, true)
+
+	while (startScope) do
+		if (startScope ~= 1) then
+			tinsert(lines, text:sub(position, startScope-1))
+		end
+		position = endScope + 1
+		startScope, endScope = text:find("\n", position, true)
+	end
+
+	if (position <= #text) then
+		tinsert(lines, text:sub(position))
+	end
+
+	return lines
+end
+
 
 DF.www_icons = {
 	texture = "feedback_sites",
