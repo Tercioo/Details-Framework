@@ -1337,13 +1337,11 @@ DF.PotionIDs = {
 DF.FeastIDs = {
 	[308462] = true, --Feast of Gluttonous Hedonism
 	[307153] = true, --Eternal Cauldron
-
-
-
 }
 
 DF.RuneIDs = {
 	[347901] = true, --Veiled Augmentation
+	[367405] = true, --Eternal Augmentation
 }
 
 --	/dump UnitAura ("player", 1)
