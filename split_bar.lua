@@ -397,6 +397,14 @@ local SplitBarMetaFunctions = _G[DF.GlobalWidgetControlNames ["split_bar"]]
 		self.background:SetVertexColor (r, g, b, a)
 		self.background.original_colors = {r, g, b, a}
 	end
+
+	function SplitBarMetaFunctions:GetLeftColor()
+		return self.texture:GetVertexColor()
+	end
+
+	function SplitBarMetaFunctions:GetRightColor()
+		return self.background:GetVertexColor()
+	end
 	
 -- icons
 	function SplitBarMetaFunctions:SetLeftIcon (texture, ...)
