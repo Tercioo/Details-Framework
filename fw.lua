@@ -1,6 +1,6 @@
 
 
-local dversion = 352
+local dversion = 354
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary (major, minor)
 
@@ -279,8 +279,6 @@ DF.FrameWorkVersion = tostring (dversion)
 function DF:PrintVersion()
 	print ("Details! Framework Version:", DF.FrameWorkVersion)
 end
-
-LibStub:GetLibrary("AceTimer-3.0"):Embed (DF)
 
 --> get the working folder
 do
@@ -3528,6 +3526,12 @@ local DFNamePlateBorderTemplateMixin = {};
 function DFNamePlateBorderTemplateMixin:SetVertexColor(r, g, b, a)
 	for i, texture in ipairs(self.Textures) do
 		texture:SetVertexColor(r, g, b, a);
+	end
+end
+
+function DFNamePlateBorderTemplateMixin:GetVertexColor()
+	for i, texture in ipairs(self.Textures) do
+		return texture:GetVertexColor();
 	end
 end
 
