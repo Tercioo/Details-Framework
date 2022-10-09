@@ -1145,13 +1145,12 @@ end
 
  -- ~fillpanel
   --alias
-function DF:CreateFillPanel (parent, rows, w, h, total_lines, fill_row, autowidth, options, member, name)
-	return DF:NewFillPanel (parent, rows, name, member, w, h, total_lines, fill_row, autowidth, options)
+function DF:CreateFillPanel(parent, rows, w, h, total_lines, fill_row, autowidth, options, member, name)
+	return DF:NewFillPanel(parent, rows, name, member, w, h, total_lines, fill_row, autowidth, options)
 end
  
-function DF:NewFillPanel (parent, rows, name, member, w, h, total_lines, fill_row, autowidth, options)
-	
-	local panel = DF:NewPanel (parent, parent, name, member, w, h)
+function DF:NewFillPanel(parent, rows, name, member, w, h, total_lines, fill_row, autowidth, options)
+	local panel = DF:NewPanel(parent, parent, name, member, w, h)
 	panel.backdrop = nil
 	
 	options = options or {rowheight = 20}
@@ -1179,21 +1178,19 @@ function DF:NewFillPanel (parent, rows, name, member, w, h, total_lines, fill_ro
 	panel._totalfunc = total_lines
 	panel._autowidth = autowidth
 	
-	panel:SetScript ("OnSizeChanged", function() 
-		panel:SetScript ("OnUpdate", fillpanel_update_size)
+	panel:SetScript("OnSizeChanged", function() 
+		panel:SetScript("OnUpdate", fillpanel_update_size)
 	end)
 	
-	for index, t in ipairs (rows) do 
-		panel.AddRow (panel, t)
+	for index, t in ipairs(rows) do 
+		panel.AddRow(panel, t)
 	end
 
-	local refresh_fillbox = function (self)
-	
-		local offset = FauxScrollFrame_GetOffset (self)
-		local filled_lines = panel._totalfunc (panel)		
+	local refresh_fillbox = function(self)
+		local offset = FauxScrollFrame_GetOffset(self)
+		local filled_lines = panel._totalfunc(panel)		
 	
 		for index = 1, #self.lines do
-	
 			local row = self.lines [index]
 			if (index <= filled_lines) then
 

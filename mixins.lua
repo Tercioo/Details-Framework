@@ -299,6 +299,7 @@ detailsFramework.PayloadMixin = {
 detailsFramework.ScrollBoxFunctions = {
 	Refresh = function(self)
 		--hide all frames and tag as not in use
+		self._LinesInUse = 0
 		for index, frame in ipairs(self.Frames) do
 			frame:Hide()
 			frame._InUse = nil
@@ -322,13 +323,25 @@ detailsFramework.ScrollBoxFunctions = {
 
 		self:Show()
 
-		if (self.HideScrollBar) then
-			local frameName = self:GetName()
-			if (frameName) then
+		local frameName = self:GetName()
+		if (frameName) then
+			if (self.HideScrollBar) then
 				local scrollBar = _G[frameName .. "ScrollBar"]
 				if (scrollBar) then
 					scrollBar:Hide()
 				end
+			else
+				--[=[ --maybe in the future I visit this again
+				local scrollBar = _G[frameName .. "ScrollBar"]
+				local height = self:GetHeight()
+				local totalLinesRequired = #self.data
+				local linesShown = self._LinesInUse
+
+				local percent = linesShown / totalLinesRequired
+				local thumbHeight = height * percent
+				scrollBar.ThumbTexture:SetSize(12, thumbHeight)
+				print("thumbHeight:", thumbHeight)
+				--]=]
 			end
 		end
 		return self.Frames
@@ -367,6 +380,8 @@ detailsFramework.ScrollBoxFunctions = {
 		if (line) then
 			line._InUse = true
 		end
+
+		self._LinesInUse = self._LinesInUse + 1
 		return line
 	end,
 

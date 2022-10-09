@@ -1,6 +1,6 @@
 
 
-local dversion = 377
+local dversion = 378
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary(major, minor)
 
@@ -3831,142 +3831,104 @@ end
 
 function DF:ReskinSlider (slider, heightOffset)
 	if (slider.slider) then
-		slider.cima:SetNormalTexture ([[Interface\Buttons\Arrow-Up-Up]])
-		slider.cima:SetPushedTexture ([[Interface\Buttons\Arrow-Up-Down]])
-		slider.cima:SetDisabledTexture ([[Interface\Buttons\Arrow-Up-Disabled]])
+		slider.cima:SetNormalTexture([[Interface\Buttons\Arrow-Up-Up]])
+		slider.cima:SetPushedTexture([[Interface\Buttons\Arrow-Up-Down]])
+		slider.cima:SetDisabledTexture([[Interface\Buttons\Arrow-Up-Disabled]])
 		slider.cima:GetNormalTexture():ClearAllPoints()
 		slider.cima:GetPushedTexture():ClearAllPoints()
 		slider.cima:GetDisabledTexture():ClearAllPoints()
-		slider.cima:GetNormalTexture():SetPoint ("center", slider.cima, "center", 1, 1)
-		slider.cima:GetPushedTexture():SetPoint ("center", slider.cima, "center", 1, 1)
-		slider.cima:GetDisabledTexture():SetPoint ("center", slider.cima, "center", 1, 1)
-		slider.cima:SetSize (16, 16)
-		--[=[
-		slider.cima:SetBackdrop ({edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1, bgFile = [[Interface\AddOns\Details\images\background]]})
-		slider.cima:SetBackdropColor (0, 0, 0, 0.3)
-		slider.cima:SetBackdropBorderColor (0, 0, 0, 1)
-		]=]
-		
-		slider.baixo:SetNormalTexture ([[Interface\Buttons\Arrow-Down-Up]])
-		slider.baixo:SetPushedTexture ([[Interface\Buttons\Arrow-Down-Down]])
-		slider.baixo:SetDisabledTexture ([[Interface\Buttons\Arrow-Down-Disabled]])
+		slider.cima:GetNormalTexture():SetPoint("center", slider.cima, "center", 1, 1)
+		slider.cima:GetPushedTexture():SetPoint("center", slider.cima, "center", 1, 1)
+		slider.cima:GetDisabledTexture():SetPoint("center", slider.cima, "center", 1, 1)
+		slider.cima:SetSize(16, 16)
+
+		slider.baixo:SetNormalTexture([[Interface\Buttons\Arrow-Down-Up]])
+		slider.baixo:SetPushedTexture([[Interface\Buttons\Arrow-Down-Down]])
+		slider.baixo:SetDisabledTexture([[Interface\Buttons\Arrow-Down-Disabled]])
 		slider.baixo:GetNormalTexture():ClearAllPoints()
 		slider.baixo:GetPushedTexture():ClearAllPoints()
 		slider.baixo:GetDisabledTexture():ClearAllPoints()
-		slider.baixo:GetNormalTexture():SetPoint ("center", slider.baixo, "center", 1, -5)
-		slider.baixo:GetPushedTexture():SetPoint ("center", slider.baixo, "center", 1, -5)
-		slider.baixo:GetDisabledTexture():SetPoint ("center", slider.baixo, "center", 1, -5)
-		slider.baixo:SetSize (16, 16)
-		--[=[
-		slider.baixo:SetBackdrop ({edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1, bgFile = [[Interface\AddOns\Details\images\background]]})
-		slider.baixo:SetBackdropColor (0, 0, 0, 0.35)
-		slider.baixo:SetBackdropBorderColor (0, 0, 0, 1)
-		
-		slider.slider:SetBackdrop ({edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1, bgFile = [[Interface\AddOns\Details\images\background]]})
-		slider.slider:SetBackdropColor (0, 0, 0, 0.35)
-		slider.slider:SetBackdropBorderColor (0, 0, 0, 1)
-		]=]
-		
-		--slider.slider:Altura (164)
-		slider.slider:cimaPoint (0, 13)
-		slider.slider:baixoPoint (0, -13)
-		slider.slider.thumb:SetTexture ([[Interface\AddOns\Details\images\icons2]])
-		slider.slider.thumb:SetTexCoord (482/512, 492/512, 104/512, 120/512)
-		slider.slider.thumb:SetSize (12, 12)
-		slider.slider.thumb:SetVertexColor (0.6, 0.6, 0.6, 0.95)
+		slider.baixo:GetNormalTexture():SetPoint("center", slider.baixo, "center", 1, -5)
+		slider.baixo:GetPushedTexture():SetPoint("center", slider.baixo, "center", 1, -5)
+		slider.baixo:GetDisabledTexture():SetPoint("center", slider.baixo, "center", 1, -5)
+		slider.baixo:SetSize(16, 16)
+
+		slider.slider:cimaPoint(0, 13)
+		slider.slider:baixoPoint(0, -13)
+		slider.slider.thumb:SetTexture([[Interface\AddOns\Details\images\icons2]])
+		slider.slider.thumb:SetTexCoord(482/512, 492/512, 104/512, 120/512)
+		slider.slider.thumb:SetSize(12, 12)
+		slider.slider.thumb:SetVertexColor(0.6, 0.6, 0.6, 0.95)
 		
 	else
 		--up button
-
 		local offset = 1 --space between the scrollbox and the scrollar
 
 		do
 			local normalTexture = slider.ScrollBar.ScrollUpButton.Normal
-			normalTexture:SetTexture ([[Interface\Buttons\Arrow-Up-Up]])
-			normalTexture:SetTexCoord (0, 1, .2, 1)
+			normalTexture:SetTexture([[Interface\Buttons\Arrow-Up-Up]])
+			normalTexture:SetTexCoord(0, 1, .2, 1)
 			
-			normalTexture:SetPoint ("topleft", slider.ScrollBar.ScrollUpButton, "topleft", offset, 0)
-			normalTexture:SetPoint ("bottomright", slider.ScrollBar.ScrollUpButton, "bottomright", offset, 0)
+			normalTexture:SetPoint("topleft", slider.ScrollBar.ScrollUpButton, "topleft", offset, 0)
+			normalTexture:SetPoint("bottomright", slider.ScrollBar.ScrollUpButton, "bottomright", offset, 0)
 			
 			local pushedTexture = slider.ScrollBar.ScrollUpButton.Pushed
-			pushedTexture:SetTexture ([[Interface\Buttons\Arrow-Up-Down]])
-			pushedTexture:SetTexCoord (0, 1, .2, 1)
+			pushedTexture:SetTexture([[Interface\Buttons\Arrow-Up-Down]])
+			pushedTexture:SetTexCoord(0, 1, .2, 1)
 			
-			pushedTexture:SetPoint ("topleft", slider.ScrollBar.ScrollUpButton, "topleft", offset, 0)
-			pushedTexture:SetPoint ("bottomright", slider.ScrollBar.ScrollUpButton, "bottomright", offset, 0)
+			pushedTexture:SetPoint("topleft", slider.ScrollBar.ScrollUpButton, "topleft", offset, 0)
+			pushedTexture:SetPoint("bottomright", slider.ScrollBar.ScrollUpButton, "bottomright", offset, 0)
 
 			local disabledTexture = slider.ScrollBar.ScrollUpButton.Disabled
-			disabledTexture:SetTexture ([[Interface\Buttons\Arrow-Up-Disabled]])
-			disabledTexture:SetTexCoord (0, 1, .2, 1)
-			disabledTexture:SetAlpha (.5)
+			disabledTexture:SetTexture([[Interface\Buttons\Arrow-Up-Disabled]])
+			disabledTexture:SetTexCoord(0, 1, .2, 1)
+			disabledTexture:SetAlpha(.5)
 			
-			disabledTexture:SetPoint ("topleft", slider.ScrollBar.ScrollUpButton, "topleft", offset, 0)
-			disabledTexture:SetPoint ("bottomright", slider.ScrollBar.ScrollUpButton, "bottomright", offset, 0)
+			disabledTexture:SetPoint("topleft", slider.ScrollBar.ScrollUpButton, "topleft", offset, 0)
+			disabledTexture:SetPoint("bottomright", slider.ScrollBar.ScrollUpButton, "bottomright", offset, 0)
 			
-			slider.ScrollBar.ScrollUpButton:SetSize (16, 16)
-			--[=[
-			slider.ScrollBar.ScrollUpButton:SetBackdrop ({edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1, bgFile = "Interface\\Tooltips\\UI-Tooltip-Background"})
-			slider.ScrollBar.ScrollUpButton:SetBackdropColor (0, 0, 0, 0.3)
-			slider.ScrollBar.ScrollUpButton:SetBackdropBorderColor (0, 0, 0, 1)
-			]=]
-			--it was having problems with the texture anchor when calling ClearAllPoints() and setting new points different from the original
-			--now it is using the same points from the original with small offsets tp align correctly
+			slider.ScrollBar.ScrollUpButton:SetSize(16, 16)
 		end
 		
 		--down button
 		do
 			local normalTexture = slider.ScrollBar.ScrollDownButton.Normal
-			normalTexture:SetTexture ([[Interface\Buttons\Arrow-Down-Up]])
-			normalTexture:SetTexCoord (0, 1, 0, .8)
+			normalTexture:SetTexture([[Interface\Buttons\Arrow-Down-Up]])
+			normalTexture:SetTexCoord(0, 1, 0, .8)
 			
-			normalTexture:SetPoint ("topleft", slider.ScrollBar.ScrollDownButton, "topleft", offset, -4)
-			normalTexture:SetPoint ("bottomright", slider.ScrollBar.ScrollDownButton, "bottomright", offset, -4)
+			normalTexture:SetPoint("topleft", slider.ScrollBar.ScrollDownButton, "topleft", offset, -4)
+			normalTexture:SetPoint("bottomright", slider.ScrollBar.ScrollDownButton, "bottomright", offset, -4)
 			
 			local pushedTexture = slider.ScrollBar.ScrollDownButton.Pushed
-			pushedTexture:SetTexture ([[Interface\Buttons\Arrow-Down-Down]])
-			pushedTexture:SetTexCoord (0, 1, 0, .8)
+			pushedTexture:SetTexture([[Interface\Buttons\Arrow-Down-Down]])
+			pushedTexture:SetTexCoord(0, 1, 0, .8)
 			
-			pushedTexture:SetPoint ("topleft", slider.ScrollBar.ScrollDownButton, "topleft", offset, -4)
-			pushedTexture:SetPoint ("bottomright", slider.ScrollBar.ScrollDownButton, "bottomright", offset, -4)
+			pushedTexture:SetPoint("topleft", slider.ScrollBar.ScrollDownButton, "topleft", offset, -4)
+			pushedTexture:SetPoint("bottomright", slider.ScrollBar.ScrollDownButton, "bottomright", offset, -4)
 			
 			local disabledTexture = slider.ScrollBar.ScrollDownButton.Disabled
-			disabledTexture:SetTexture ([[Interface\Buttons\Arrow-Down-Disabled]])
-			disabledTexture:SetTexCoord (0, 1, 0, .8)
-			disabledTexture:SetAlpha (.5)
+			disabledTexture:SetTexture([[Interface\Buttons\Arrow-Down-Disabled]])
+			disabledTexture:SetTexCoord(0, 1, 0, .8)
+			disabledTexture:SetAlpha(.5)
 			
-			disabledTexture:SetPoint ("topleft", slider.ScrollBar.ScrollDownButton, "topleft", offset, -4)
-			disabledTexture:SetPoint ("bottomright", slider.ScrollBar.ScrollDownButton, "bottomright", offset, -4)
+			disabledTexture:SetPoint("topleft", slider.ScrollBar.ScrollDownButton, "topleft", offset, -4)
+			disabledTexture:SetPoint("bottomright", slider.ScrollBar.ScrollDownButton, "bottomright", offset, -4)
 			
 			slider.ScrollBar.ScrollDownButton:SetSize (16, 16)
-			--[=[
-			slider.ScrollBar.ScrollDownButton:SetBackdrop ({edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1, bgFile = "Interface\\Tooltips\\UI-Tooltip-Background"})
-			slider.ScrollBar.ScrollDownButton:SetBackdropColor (0, 0, 0, 0.3)
-			slider.ScrollBar.ScrollDownButton:SetBackdropBorderColor (0, 0, 0, 1)
-			]=]
-
-			--<Anchor point="TOP" relativePoint="BOTTOM"/>
-			--slider.ScrollBar.ScrollDownButton:SetPoint ("top", slider.ScrollBar, "bottom", 0, 0)
 		end
 		
 		--if the parent has a editbox, this is a code editor
 		if (slider:GetParent().editbox) then
-			slider.ScrollBar:SetPoint ("TOPLEFT", slider, "TOPRIGHT", 12 + offset, -6)
-			slider.ScrollBar:SetPoint ("BOTTOMLEFT", slider, "BOTTOMRIGHT", 12 + offset, 6 + (heightOffset and heightOffset*-1 or 0))
+			slider.ScrollBar:SetPoint("TOPLEFT", slider, "TOPRIGHT", 12 + offset, -6)
+			slider.ScrollBar:SetPoint("BOTTOMLEFT", slider, "BOTTOMRIGHT", 12 + offset, 6 + (heightOffset and heightOffset*-1 or 0))
 
 		else
-			slider.ScrollBar:SetPoint ("TOPLEFT", slider, "TOPRIGHT", 6, -16)
-			slider.ScrollBar:SetPoint ("BOTTOMLEFT", slider, "BOTTOMRIGHT", 6, 16 + (heightOffset and heightOffset*-1 or 0))
+			slider.ScrollBar:SetPoint("TOPLEFT", slider, "TOPRIGHT", 6, -16)
+			slider.ScrollBar:SetPoint("BOTTOMLEFT", slider, "BOTTOMRIGHT", 6, 16 + (heightOffset and heightOffset*-1 or 0))
 		end
 
-		slider.ScrollBar.ThumbTexture:SetColorTexture (.5, .5, .5, .3)
-		slider.ScrollBar.ThumbTexture:SetSize (12, 8)
-		
-		--
-		--[=[
-		slider.ScrollBar:SetBackdrop ({edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1, bgFile = "Interface\\Tooltips\\UI-Tooltip-Background"})
-		slider.ScrollBar:SetBackdropColor (0, 0, 0, 0.35)
-		slider.ScrollBar:SetBackdropBorderColor (0, 0, 0, 1)
-		]=]
+		slider.ScrollBar.ThumbTexture:SetColorTexture(.5, .5, .5, .3)
+		slider.ScrollBar.ThumbTexture:SetSize(12, 8)
 	end
 end
 
