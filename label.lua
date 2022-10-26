@@ -10,8 +10,6 @@ local loadedAPILabelFunctions = false
 do
 	local metaPrototype = {
 		WidgetType = "label",
-		SetHook = detailsFramework.SetHook,
-		RunHooksForWidget = detailsFramework.RunHooksForWidget,
 		dversion = detailsFramework.dversion,
 	}
 
@@ -36,16 +34,17 @@ end
 local LabelMetaFunctions = _G[detailsFramework.GlobalWidgetControlNames ["label"]]
 
 detailsFramework:Mixin(LabelMetaFunctions, detailsFramework.SetPointMixin)
+detailsFramework:Mixin(LabelMetaFunctions, detailsFramework.ScriptHookMixin)
 
 ------------------------------------------------------------------------------------------------------------
---> metatables
+--metatables
 
 	LabelMetaFunctions.__call = function(object, value)
 		return object.label:SetText(value)
 	end
 
 ------------------------------------------------------------------------------------------------------------
---> members
+--members
 
 	--get text
 	local gmember_text = function(object)
@@ -202,7 +201,7 @@ detailsFramework:Mixin(LabelMetaFunctions, detailsFramework.SetPointMixin)
 	LabelMetaFunctions.SetMembers["textsize"] = smember_textsize--alias
 	LabelMetaFunctions.SetMembers["shadow"] = smember_outline
 	LabelMetaFunctions.SetMembers["outline"] = smember_outline--alias
-	LabelMetaFunctions.SetMembers["rotation"] = smember_rotation--alias
+	LabelMetaFunctions.SetMembers["rotation"] = smember_rotation
 
 	LabelMetaFunctions.__newindex = function(object, key, value)
 		local func = LabelMetaFunctions.SetMembers[key]
@@ -285,7 +284,9 @@ detailsFramework:Mixin(LabelMetaFunctions, detailsFramework.SetPointMixin)
 			container = container.widget
 		end
 
-		font = font == "" and "GameFontHighlightSmall" or font or "GameFontHighlightSmall"
+		if (not font or font == "") then
+			font = "GameFontNormal"
+		end
 
 		labelObject.label = parent:CreateFontString(name, layer or "OVERLAY", font)
 		labelObject.widget = labelObject.label
