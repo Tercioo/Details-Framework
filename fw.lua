@@ -4832,6 +4832,7 @@ end
 		["getglobal"] = true,
 		["setmetatable"] = true,
 		["DevTools_DumpCommand"] = true,
+		["ChatEdit_SendText"] = true,
 
 		--avoid creating macros
 		["SetBindingMacro"] = true,
