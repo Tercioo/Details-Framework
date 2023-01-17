@@ -937,12 +937,14 @@ DF.CrowdControlSpells = {
 	[61721] = "MAGE", --Polymorph Rabbit
 	[28272] = "MAGE", --Polymorph Pig
 	[277792] = "MAGE", --Polymorph Bumblebee
+	[391622] = "MAGE", --Polymorph Duck
 	[2139] = "MAGE", --Counterspell
 	
 	[82691] = "MAGE", --Ring of Frost (debuff spellid)
 	[122] = "MAGE", --Frost Nova
 	[157997] = "MAGE", --Ice Nova
 	[31661] = "MAGE", --Dragon's Breath
+	[157981] = "MAGE", --Blast Wave
 	
 	[205364] = "PRIEST", --Mind Control (talent)
 	[605] = "PRIEST", --Mind Control
