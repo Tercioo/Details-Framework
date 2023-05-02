@@ -7954,6 +7954,7 @@ detailsFramework.CastFrameFunctions = {
 	end,
 
 	UpdateChannelInfo = function(self, unit, ...)
+		local unitID, castID, spellID = ...
 		local name, text, texture, startTime, endTime, isTradeSkill, notInterruptible, spellID, _, numStages = UnitChannelInfo (unit)
 
 		--is valid?
@@ -8081,7 +8082,9 @@ detailsFramework.CastFrameFunctions = {
 			end
 
 			self.casting = nil
+			self.channeling = nil
 			self.finished = true
+			self.castID = nil
 
 			if (not self:HasScheduledHide()) then
 				--check if settings has no fade option or if its parents are not visible
@@ -8112,8 +8115,10 @@ detailsFramework.CastFrameFunctions = {
 			local _, maxValue = self:GetMinMaxValues()
 			self:SetValue(self.maxValue or maxValue or 1)
 
+			self.casting = nil
 			self.channeling = nil
 			self.finished = true
+			self.castID = nil
 
 			if (not self:HasScheduledHide()) then
 				--check if settings has no fade option or if its parents are not visible
@@ -8153,6 +8158,7 @@ detailsFramework.CastFrameFunctions = {
 			self.channeling = nil
 			self.failed = true
 			self.finished = true
+			self.castID = nil
 			self:SetValue(self.maxValue or select(2, self:GetMinMaxValues()) or 1)
 
 			--set the statusbar color
@@ -8174,6 +8180,7 @@ detailsFramework.CastFrameFunctions = {
 			self.channeling = nil
 			self.interrupted = true
 			self.finished = true
+			self.castID = nil
 
 			if (self.Settings.FillOnInterrupt) then
 				self:SetValue(self.maxValue or select(2, self:GetMinMaxValues()) or 1)
