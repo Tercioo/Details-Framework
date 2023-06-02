@@ -1136,3 +1136,64 @@ end
         highlightTexture:SetVertexColor(r, g, b, a)
         disabledTexture:SetVertexColor(r, g, b, a)
     end
+
+
+------------------------------------------------------------------------------------------------------------
+--tab button
+
+DF.TabButtonMixin = {
+	---set the text of the tab button
+	---@param self df_tabbutton
+	---@param text string
+	SetText = function(self, text)
+		self.Text:SetText(text)
+	end,
+
+}
+
+---create a button which can be used as a tab button, has textures for left, right, middle and a text
+---@param parent frame
+---@param name string|nil
+---@return df_tabbutton
+function DF:CreateTabButton(parent, name)
+	---@type df_tabbutton
+	local tabButton = CreateFrame("button", name, parent)
+	tabButton:SetSize(50, 20)
+
+	tabButton.Left = tabButton:CreateTexture(nil, "overlay")
+	tabButton.Right = tabButton:CreateTexture(nil, "overlay")
+	tabButton.Middle = tabButton:CreateTexture(nil, "overlay")
+	tabButton.Text = tabButton:CreateFontString(nil, "overlay", "GameFontNormal")
+
+	tabButton.Text:SetPoint("center", tabButton, "center", 0, 0)
+
+	tabButton.Left:SetPoint("bottomleft", tabButton, "bottomleft", 0, 0)
+	tabButton.Left:SetPoint("topleft", tabButton, "topleft", 0, 0)
+
+	tabButton.Right:SetPoint("bottomright", tabButton, "bottomright", 0, 0)
+	tabButton.Right:SetPoint("topright", tabButton, "topright", 0, 0)
+
+	tabButton.Middle:SetPoint("topleft", tabButton.Left, "topright", 0, 0)
+	tabButton.Middle:SetPoint("topright", tabButton.Right, "topleft", 0, 0)
+
+	tabButton.Left:SetAtlas("Options_Tab_Left")
+	tabButton.Left:SetWidth(2)
+
+	tabButton.Right:SetAtlas("Options_Tab_Right")
+	tabButton.Right:SetWidth(2)
+
+	tabButton.Middle:SetAtlas("Options_Tab_Middle")
+	tabButton.Middle:SetHeight(20)
+
+	tabButton.Text:SetText("tab")
+
+	return tabButton
+end
+
+
+---@class df_tabbutton : frame
+---@field Left texture
+---@field Right texture
+---@field Middle texture
+---@field Text fontstring
+---@field SetText fun(self:df_tabbutton, text:string)
