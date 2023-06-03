@@ -10,6 +10,10 @@ local CreateFrame = CreateFrame
 local PixelUtil = PixelUtil
 
 detailsFramework.IconMixin = {
+	---create a new icon frame
+	---@param self frame the parent frame
+	---@param iconName string the name of the icon frame
+	---@return frame
     CreateIcon = function(self, iconName)
         local iconFrame = CreateFrame("frame", iconName, self, "BackdropTemplate")
 
@@ -42,6 +46,8 @@ detailsFramework.IconMixin = {
         iconFrame.Desc = iconFrame:CreateFontString(nil, "overlay", "GameFontNormal")
         iconFrame.Desc:SetPoint("bottom", iconFrame, "top", 0, 2)
         iconFrame.Desc:Hide()
+
+		return iconFrame
     end,
 
 	GetIcon = function(self)
