@@ -375,14 +375,14 @@ detailsFramework.ScriptHookMixin = {
 				local isRemoval = false
 				for i = #self.HookList[hookType], 1, -1 do
 					if (self.HookList[hookType][i] == func) then
-						tremove(self.HookList[hookType], i)
+						table.remove(self.HookList[hookType], i)
 						isRemoval = true
 						break
 					end
 				end
 
 				if (not isRemoval) then
-					tinsert(self.HookList[hookType], func)
+					table.insert(self.HookList[hookType], func)
 				end
 			else
 				if (detailsFramework.debug) then
