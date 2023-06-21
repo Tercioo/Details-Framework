@@ -447,6 +447,7 @@ detailsFramework.TextEntryCounter = detailsFramework.TextEntryCounter or 1
 		OnEnterPressed(self.editbox, byScript)
 	end
 
+	---set the textEntry as a search box, it will add a magnifying glass icon on the left side and a clearSearchButton in the right.
 	function TextEntryMetaFunctions:SetAsSearchBox()
 		if (self.__bIsSearchBox) then
 			return
