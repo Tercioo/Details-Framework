@@ -1,6 +1,6 @@
 
 
-local dversion = 444
+local dversion = 445
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary(major, minor)
 
@@ -263,7 +263,7 @@ function DF.UnitGroupRolesAssigned(unitId)
 	end
 end
 
----return the specialization of the player it self
+---return the specializationid of the player it self
 ---@return number|nil
 function DF.GetSpecialization()
 	if (GetSpecialization) then
@@ -272,7 +272,7 @@ function DF.GetSpecialization()
 	return nil
 end
 
----return the specialization using the specId
+---return the specializationid using the specId
 ---@param specId unknown
 function DF.GetSpecializationInfoByID(specId)
 	if (GetSpecializationInfoByID) then
