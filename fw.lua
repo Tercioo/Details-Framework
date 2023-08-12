@@ -1491,23 +1491,31 @@ end
 ---@param maxWidth number
 function DF:TruncateTextSafe(fontString, maxWidth)
 	local text = fontString:GetText()
-	local numIterations = 10
+	if text == nil or text == '' then return end
 
-	while (fontString:GetStringWidth() > maxWidth) do
-		text = strsub(text, 1, #text-1)
-		fontString:SetText(text)
-		if (#text <= 1) then
-			break
+	if fontString:GetUnboundedStringWidth() > maxWidth then
+		local left = 1
+		local right = #text
+		local numIterations = 10
+
+		while left <= right and numIterations > 0 do
+			local middle = math.floor((left + right) * 0.5)
+			local substring = strsub(text, 1, middle)
+			fontString:SetText(substring)
+
+			if fontString:GetUnboundedStringWidth() <= maxWidth then
+				left = middle + 1
+			else
+				right = middle - 1
+			end
+
+			numIterations = numIterations - 1
 		end
 
-		numIterations = numIterations - 1
-		if (numIterations <= 0) then
-			break
-		end
+		text = strsub(text, 1, right)
 	end
 
-	text = DF:CleanTruncateUTF8String(text)
-	fontString:SetText(text)
+	fontString:SetText(DF:CleanTruncateUTF8String(text))
 end
 
 ---truncate removing characters from the string until the maxWidth is reach
@@ -1515,17 +1523,28 @@ end
 ---@param maxWidth number
 function DF:TruncateText(fontString, maxWidth)
 	local text = fontString:GetText()
+	if text == nil or text == '' then return end
 
-	while (fontString:GetStringWidth() > maxWidth) do
-		text = strsub(text, 1, #text - 1)
-		fontString:SetText(text)
-		if (string.len(text) <= 1) then
-			break
+	if fontString:GetUnboundedStringWidth() > maxWidth then
+		local left = 1
+		local right = #text
+
+		while left <= right do
+			local middle = math.floor((left + right) * 0.5)
+			local substring = strsub(text, 1, middle)
+			fontString:SetText(substring)
+
+			if fontString:GetUnboundedStringWidth() <= maxWidth then
+				left = middle + 1
+			else
+				right = middle - 1
+			end
 		end
+
+		text = strsub(text, 1, right)
 	end
 
-	text = DF:CleanTruncateUTF8String(text)
-	fontString:SetText(text)
+	fontString:SetText(DF:CleanTruncateUTF8String(text))
 end
 
 ---@param text string
@@ -2082,8 +2101,8 @@ end
 	---* b (number|nil): The blue component of the color. This is optional if r is a string.
 	---* a (number|nil): The alpha component of the color. This is optional and defaults to 1 if not provided.
 	---* decimalsAmount (number|nil): The number of decimal places to round the color components to. This is optional and defaults to 4 if not provided.
-	---* The function returns the color in the new format. The return type depends on the newFormat parameter. It can be a string, a table, or four separate number values (for the "numbers" format). 
-	---* For the "hex" format, it returns a string representing the color in hexadecimal format.	
+	---* The function returns the color in the new format. The return type depends on the newFormat parameter. It can be a string, a table, or four separate number values (for the "numbers" format).
+	---* For the "hex" format, it returns a string representing the color in hexadecimal format.
 	---@param newFormat string
 	---@param r number|string
 	---@param g number|nil
