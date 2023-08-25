@@ -14,7 +14,10 @@
 ---@class detailsframework
 ---@field OptionsFunctions df_optionsmixin
 ---@field RoundedCornerPanelMixin df_roundedcornermixin
+---@field Schedules df_schedule
+---@field Math df_math
 ---@field table df_table_functions
+---@field Dispatch fun(self:table, callback:function, ...) : any dispatch a function call using xpcall
 ---@field GetDefaultBackdropColor fun(self:table) : red, green, blue, alpha return the standard backdrop color used by blizzard on their own frames
 ---@field Msg fun(self:table, message:string, ...) show a message in the chat frame
 ---@field MsgWarning fun(self:table, message:string, ...) show a warning message in the chat frame
@@ -40,7 +43,6 @@
 ---@field CommaValue fun(self:table, value:number) : string convert a number to a string with commas, e.g. 1000000 -> 1,000,000
 ---@field SplitTextInLines fun(self:table, text:string) : string[] split a text into lines
 ---@field UnitGroupRolesAssigned fun(unitId: unit, bUseSupport:boolean, specId: specializationid) : string there's no self here
----@field 
 ---@field 
 ---@field 
 ---@field 
