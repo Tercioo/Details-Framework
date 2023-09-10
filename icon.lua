@@ -772,6 +772,7 @@ detailsFramework.IconMixin = {
 		table.wipe(self.AuraCache)
 
 		local iconPool = self.IconPool
+		local iconsActive = 0
 
 		for i = 1, self.NextIcon -1 do
 			local iconFrame = iconPool[i]
@@ -792,11 +793,12 @@ detailsFramework.IconMixin = {
 				self.AuraCache[iconFrame.spellName] = true
 				self.AuraCache.canStealOrPurge = self.AuraCache.canStealOrPurge or iconFrame.canStealOrPurge
 				self.AuraCache.hasEnrage = self.AuraCache.hasEnrage or iconFrame.debuffType == "" --yes, enrages are empty-string...
+				iconsActive = iconsActive + 1
 			end
 		end
 
 		--if there's nothing to show, no need to align
-		if (not next(self.AuraCache)) then
+		if (iconsActive == 0) then
 			self:Hide()
 		else
 			self:AlignAuraIcons()
