@@ -11,6 +11,8 @@ end
 
 _G["DetailsFramework"] = DF
 
+---@cast DF detailsframework
+
 DetailsFrameworkCanLoad = true
 local SharedMedia = LibStub:GetLibrary("LibSharedMedia-3.0")
 
@@ -4812,12 +4814,27 @@ function DF:ReskinSlider(slider, heightOffset)
 	end
 end
 
+function DF:GetCurrentClassName()
+	local className = UnitClass("player")
+	return className
+end
+
+function DF:GetCurrentSpecName()
+	local specIndex = DF.GetSpecialization()
+	if (specIndex) then
+		local specId, specName = DF.GetSpecializationInfo(specIndex)
+		if (specId and specId ~= 0) then
+			return specName
+		end
+	end
+end
+
 function DF:GetCurrentSpec()
 	local specIndex = DF.GetSpecialization()
 	if (specIndex) then
-		local specID = DF.GetSpecializationInfo(specIndex)
-		if (specID and specID ~= 0) then
-			return specID
+		local specId = DF.GetSpecializationInfo(specIndex)
+		if (specId and specId ~= 0) then
+			return specId
 		end
 	end
 end
@@ -4842,8 +4859,12 @@ local specs_per_class = {
 	["EVOKER"] = {1467, 1468, 1473},
 }
 
-function DF:GetClassSpecIDs(class)
-	return specs_per_class [class]
+
+function DF:GetClassSpecIDs(engClass)
+	return specs_per_class[engClass]
+end
+function DF:GetClassSpecIds(engClass) --naming conventions
+	return DF:GetClassSpecIDs(engClass)
 end
 
 local dispatch_error = function(context, errortext)
@@ -4936,44 +4957,42 @@ DF.ClassIndexToFileName = {
 
 
 DF.ClassFileNameToIndex = {
-	["DEATHKNIGHT"] = 6,
 	["WARRIOR"] = 1,
-	["ROGUE"] = 4,
-	["MAGE"] = 8,
-	["PRIEST"] = 5,
-	["HUNTER"] = 3,
-	["WARLOCK"] = 9,
-	["DEMONHUNTER"] = 12,
-	["SHAMAN"] = 7,
-	["DRUID"] = 11,
-	["MONK"] = 10,
 	["PALADIN"] = 2,
+	["HUNTER"] = 3,
+	["ROGUE"] = 4,
+	["PRIEST"] = 5,
+	["DEATHKNIGHT"] = 6,
+	["SHAMAN"] = 7,
+	["MAGE"] = 8,
+	["WARLOCK"] = 9,
+	["MONK"] = 10,
+	["DRUID"] = 11,
+	["DEMONHUNTER"] = 12,
 	["EVOKER"] = 13,
 }
 DF.ClassCache = {}
 
 function DF:GetClassList()
-
 	if (next (DF.ClassCache)) then
 		return DF.ClassCache
 	end
 
 	for className, classIndex in pairs(DF.ClassFileNameToIndex) do
-		local classTable = C_CreatureInfo.GetClassInfo (classIndex)
+		local classTable = C_CreatureInfo.GetClassInfo(classIndex)
 		if classTable then
 			local t = {
 				ID = classIndex,
 				Name = classTable.className,
 				Texture = [[Interface\GLUES\CHARACTERCREATE\UI-CharacterCreate-Classes]],
-				TexCoord = CLASS_ICON_TCOORDS [className],
+				TexCoord = CLASS_ICON_TCOORDS[className],
 				FileString = className,
 			}
-			tinsert(DF.ClassCache, t)
+			table.insert(DF.ClassCache, t)
 		end
 	end
 
 	return DF.ClassCache
-
 end
 
 --hardcoded race list
@@ -5398,7 +5417,7 @@ DF.SpecListByClass = {
 ---@param specId number
 function DF:IsValidSpecId(specId)
 	local _, class = UnitClass("player")
-	local specs = DF.SpecListByClass[class]
+	local specs = DF.ClassSpecs[class]
 	return specs and specs[specId] and true or false
 end
 
