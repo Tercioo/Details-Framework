@@ -53,7 +53,9 @@
 ---@field ScriptHookMixin df_scripthookmixin
 ---@field ClassCache {ID:number, Name:string, FileString:string, Texture:string, TexCoord:number[]}[] only available after calling GetClassList()
 ---@field Math df_math
+---@field FontOutlineFlags table<outline, boolean>
 ---@field table df_table_functions
+---@field AnchorPoints string[]
 ---@field ClassFileNameToIndex table<string, number> engClass -> classIndex
 ---@field LoadSpellCache fun(self:table, hashMap:table, indexTable:table, allSpellsSameName:table) : hashMap:table, indexTable:table, allSpellsSameName:table load all spells in the game and add them into the passed tables
 ---@field UnloadSpellCache fun(self:table) wipe the table contents filled with LoadSpellCache()
@@ -83,8 +85,10 @@
 ---@field SetButtonTexture fun(self:table, button:button|df_button, texture:atlasname|texturepath|textureid)
 ---@field CreateFadeAnimation fun(self:table, UIObject:uiobject, fadeInTime:number?, fadeOutTime:number?, fadeInAlpha:number?, fadeOutAlpha:number?)
 ---@field SetFontSize fun(self:table, fontstring:fontstring, size:number)
+---@field GetFontSize fun(self:table, fontstring:fontstring) : number return the font size of the fontstring
 ---@field SetFontColor fun(self:table, fontstring:fontstring, red:any, green:number?, blue:number?, alpha:number?)
 ---@field SetFontFace fun(self:table, fontstring:fontstring, font:string)
+---@field GetFontFace fun(self:table, fontstring:fontstring) : string return the font face of the fontstring
 ---@field SetFontShadow fun(self:table, fontstring:fontstring, red:any, green:number?, blue:number?, alpha:number?, offsetX:number?, offsetY:number?)
 ---@field SetFontOutline fun(self:table, fontstring:fontstring, outline:fontflags)
 ---@field RemoveRealmName fun(self:table, name:string) : string, number remove the realm name from the player name, must be in the format of "name-realm"
@@ -101,6 +105,9 @@
 ---@field ApplyStandardBackdrop fun(self:table, frame:frame, bUseSolidColor:boolean?, alphaScale:number?)
 ---@field CreateLabel fun(self:table, parent:frame, text:string, size:number?, color:any?, font:string?, member:string?, name:string?, layer:drawlayer?) : df_label
 ---@field CreateDropDown fun(self:table, parent:frame, func:function, default:any, width:number?, height:number?, member:string?, name:string?, template:table?) : df_dropdown
+---@field CreateFontDropDown fun(self:table, parent:frame, func:function, default:any, width:number?, height:number?, member:string?, name:string?, template:table?) : df_dropdown
+---@field CreateColorDropDown fun(self:table, parent:frame, func:function, default:any, width:number?, height:number?, member:string?, name:string?, template:table?) : df_dropdown
+---@field CreateFontListGenerator fun(self:table, callback:function) : function return a function which when called returns a table filled with all fonts available and ready to be used on dropdowns
 ---@field CreateTextEntry fun(self:table, parent:frame, textChangedCallback:function, width:number, height:number, member:string?, name:string?, labelText:string?, textentryTemplate:table?, labelTemplate:table?) : df_textentry
 ---@field ReskinSlider fun(self:table, slider:frame)
 ---@field GetAvailableSpells fun(self:table) : table<spellid, boolean>
@@ -124,3 +131,5 @@
 ---@field GetSizeFromPercent fun(self:table, uiObject:uiobject, percent:number) : number get the min size of a uiObject and multiply it by the percent passed
 ---@field 
 ---@field 
+
+--DF:BuildMenuVolatile(parent, menuOptions, xOffset, yOffset, height, useColon, textTemplate, dropdownTemplate, switchTemplate, switchIsCheckbox, sliderTemplate, buttonTemplate, valueChangeHook)
