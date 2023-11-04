@@ -48,6 +48,8 @@ detailsFramework.ScrollBoxFunctions = {
 
 		--hide all frames that are not in use
 		for index, frame in ipairs(self.Frames) do
+			--the member _InUse is true when the line is used by the refresh function
+			--this member is set to true when the code calls scrollBox:GetLine(index)
 			if (not frame._InUse) then
 				frame:Hide()
 			else
@@ -680,4 +682,48 @@ function detailsFramework:CreateAuraScrollBox(parent, name, data, onAuraRemoveCa
     auraScrollBox:SetData(data)
 
     return auraScrollBox
+end
+
+
+detailsFramework.CanvasScrollBoxMixin = {
+
+}
+
+local canvasScrollBoxDefaultOptions = {
+	width = 600,
+	height = 400,
+	reskin_slider = true,
+}
+
+---@class df_canvasscrollbox : scrollframe, df_optionsmixin
+
+
+---@param parent frame
+---@param child frame
+---@param name string?
+---@param options table?
+---@return df_canvasscrollbox
+function detailsFramework:CreateCanvasScrollBox(parent, child, name, options)
+	---@type df_canvasscrollbox
+	local canvasScrollBox = CreateFrame("scrollframe", name, parent, "BackdropTemplate, UIPanelScrollFrameTemplate")
+
+	detailsFramework:Mixin(canvasScrollBox, detailsFramework.CanvasScrollBoxMixin)
+	detailsFramework:Mixin(canvasScrollBox, detailsFramework.OptionsFunctions)
+
+    options = options or {}
+    canvasScrollBox:BuildOptionsTable(canvasScrollBoxDefaultOptions, options)
+
+	canvasScrollBox:SetSize(options.width, options.height)
+
+	if (child) then
+		canvasScrollBox:SetScrollChild(child)
+	end
+
+	canvasScrollBox:EnableMouseWheel(true)
+
+	if (options.reskin_slider) then
+		detailsFramework:ReskinSlider(canvasScrollBox)
+	end
+
+	return canvasScrollBox
 end
