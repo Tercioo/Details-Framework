@@ -696,16 +696,16 @@ local canvasScrollBoxDefaultOptions = {
 }
 
 ---@class df_canvasscrollbox : scrollframe, df_optionsmixin
-
+---@field child frame
 
 ---@param parent frame
----@param child frame
+---@param child frame?
 ---@param name string?
 ---@param options table?
 ---@return df_canvasscrollbox
 function detailsFramework:CreateCanvasScrollBox(parent, child, name, options)
 	---@type df_canvasscrollbox
-	local canvasScrollBox = CreateFrame("scrollframe", name, parent, "BackdropTemplate, UIPanelScrollFrameTemplate")
+	local canvasScrollBox = CreateFrame("scrollframe", name or ("DetailsFrameworkCanvasScroll" .. math.random(50000, 10000000)), parent, "BackdropTemplate, UIPanelScrollFrameTemplate")
 
 	detailsFramework:Mixin(canvasScrollBox, detailsFramework.CanvasScrollBoxMixin)
 	detailsFramework:Mixin(canvasScrollBox, detailsFramework.OptionsFunctions)
@@ -713,15 +713,18 @@ function detailsFramework:CreateCanvasScrollBox(parent, child, name, options)
     options = options or {}
     canvasScrollBox:BuildOptionsTable(canvasScrollBoxDefaultOptions, options)
 
-	canvasScrollBox:SetSize(options.width, options.height)
+	canvasScrollBox:SetSize(canvasScrollBox.options.width, canvasScrollBox.options.height)
 
-	if (child) then
-		canvasScrollBox:SetScrollChild(child)
+	if (not child) then
+		child = CreateFrame("frame", "$parentChild", canvasScrollBox)
 	end
 
+	canvasScrollBox:SetScrollChild(child)
 	canvasScrollBox:EnableMouseWheel(true)
 
-	if (options.reskin_slider) then
+	canvasScrollBox.child = child
+
+	if (canvasScrollBox.options.reskin_slider) then
 		detailsFramework:ReskinSlider(canvasScrollBox)
 	end
 
