@@ -113,7 +113,6 @@ local attributes = {
             label = "Anchor",
             widget = "anchordropdown",
             --default = {side = 1, x = 0, y = 0},
-            subkey = "side", --anchor is a table with three keys: side, x, y
         },
         {
             name = "anchoroffsetx",
@@ -122,7 +121,6 @@ local attributes = {
             --default = 0,
             minvalue = -20,
             maxvalue = 20,
-            subkey = "x",
         },
         {
             name = "anchoroffsety",
@@ -131,7 +129,6 @@ local attributes = {
             --default = 0,
             minvalue = -20,
             maxvalue = 20,
-            subkey = "y",
         },
         {
             name = "rotation",
@@ -144,6 +141,54 @@ local attributes = {
         },
     }
 }
+
+local profileTable = {
+    spellname_text_size = 10,
+    spellname_text_font = "Arial Narrow",
+    spellname_text_color = {1, 1, 1, 1},
+    spellname_text_outline = "NONE",
+    spellname_text_shadow_color = {0, 0, 0, 1},
+    spellname_text_shadow_color_offset = {1, -1},
+    spellname_text_anchor = {side = 9, x = 0, y = 0},
+}
+
+--create a map table for the profile table
+local mapTable = {
+    text = "text test",
+    size = "spellname_text_size",
+    font = "spellname_text_font",
+    color = "spellname_text_color",
+    outline = "spellname_text_outline",
+    shadowcolor = "spellname_text_shadow_color",
+    shadowoffsetx = "spellname_text_shadow_color_offset[1]",
+    shadowoffsety = "spellname_text_shadow_color_offset[2]",
+    anchor = "spellname_text_anchor.side",
+    anchoroffsetx = "spellname_text_anchor.x",
+    anchoroffsety = "spellname_text_anchor.y",
+}
+
+local table_path = {
+    shadowWidth = "text_settings[1].width",
+    shadowHeight = "text_settings[1].height",
+    shadowEnabled = "text_settings.settings.enabled",
+    text = "text_settings.settings.text.current_text",
+}
+
+local text_settings = {
+    shadowWidth = {{width = 100}},
+    shadowHeight = {{height = 100}},
+    shadowEnabled = {settings = {enabled = true}},
+    text = {settings = {text = {current_text = "hellow world"}}},
+}
+
+---@class df_editormixin : table
+---@field GetEditingObject fun(self:df_editor):uiobject
+---@field GetEditingProfile fun(self:df_editor):table, table
+---@field GetOnEditCallback fun(self:df_editor):function
+---@field GetOptionsFrame fun(self:df_editor):frame
+---@field GetCanvasScrollBox fun(self:df_editor):df_canvasscrollbox
+---@field EditObject fun(self:df_editor, object:uiobject, profileTable:table, profileKeyMap:table, callback:function)
+---@field PrepareObjectForEditing fun(self:df_editor)
 
 detailsFramework.EditorMixin = {
     ---@param self df_editor
@@ -192,7 +237,7 @@ detailsFramework.EditorMixin = {
     PrepareObjectForEditing = function(self)
         --get the object and its profile table with the current values
         local object = self:GetEditingObject()
-        local profileTable, profileMap = self:GetEditingProfileTable()
+        local profileTable, profileMap = self:GetEditingProfile()
         profileMap = profileMap or {}
 
         if (not object or not profileTable) then
@@ -201,70 +246,71 @@ detailsFramework.EditorMixin = {
 
         --get the object type
         local objectType = object:GetObjectType()
+        local attributeList
 
         if (objectType == "FontString") then
-            local menuOptions = {}
-            local fontStringAttributeList = attributes[objectType]
+            attributeList = attributes[objectType]
+        end
 
-            for i = 1, #fontStringAttributeList do
-                local option = fontStringAttributeList[i]
+        local menuOptions = {}
+        for i = 1, #attributeList do
+            local option = attributeList[i]
 
-                --get the key to be used on profile table
-                local profileKey = profileMap[option.name]
-                --get the values from profile table
-                local value = profileTable[profileKey] or option.default
+            --get the key to be used on profile table
+            local profileKey = profileMap[option.name]
+            local value
 
-                if (value) then
-                    local subKey = option.subkey
-                    if (subKey) then
-                        value = value[subKey]
-                    end
-
-                    --test value again as the sub key might not exist
-                    if (value) then
-                        menuOptions[#menuOptions+1] = {
-                            type = option.widget,
-                            name = option.label,
-                            get = function() return value end,
-                            set = function(widget, fixedValue, newValue)
-                                if (subKey) then
-                                    profileTable[profileKey][subKey] = newValue
-                                else
-                                    profileTable[profileKey] = newValue
-                                end
-
-                                if (self:GetOnEditCallback()) then
-                                    self:GetOnEditCallback()(object, option.name, newValue, profileTable, profileKey)
-                                end
-                            end,
-                            min = option.minvalue,
-                            max = option.maxvalue,
-                            step = option.step,
-                            usedecimals = option.usedecimals,
-                        }
-                    end
-                end
+            --if the key contains a dot or a bracket, it means it's a table path, example: "text_settings[1].width"
+            if (profileKey and (profileKey:match("%.") or profileKey:match("%["))) then
+                value = detailsFramework.table.getfrompath(profileTable, profileKey)
             end
 
-            --at this point, the optionsTable is ready to be used on DF:BuildMenuVolatile()
-            menuOptions.align_as_pairs = true
-            menuOptions.align_as_pairs_length = 150
+            --if no value is found, attempt to get a default
+            value = value or option.default
 
-            local optionsFrame = self:GetOptionsFrame()
-            local canvasScrollBox = self:GetCanvasScrollBox()
-            local bUseColon = true
-            local bSwitchIsCheckbox = true
-            local maxHeight = 5000
+            if (value) then
+                menuOptions[#menuOptions+1] = {
+                    type = option.widget,
+                    name = option.label,
+                    get = function() return value end,
+                    set = function(widget, fixedValue, newValue)
+                        profileTable[profileKey] = newValue
 
-            --templates
-            local options_text_template = detailsFramework:GetTemplate("font", "OPTIONS_FONT_TEMPLATE")
-            local options_dropdown_template = detailsFramework:GetTemplate("dropdown", "OPTIONS_DROPDOWN_TEMPLATE")
-            local options_switch_template = detailsFramework:GetTemplate("switch", "OPTIONS_CHECKBOX_TEMPLATE")
-            local options_slider_template = detailsFramework:GetTemplate("slider", "OPTIONS_SLIDER_TEMPLATE")
-            local options_button_template = detailsFramework:GetTemplate("button", "OPTIONS_BUTTON_TEMPLATE")
-
-            detailsFramework:BuildMenuVolatile(optionsFrame, menuOptions, 0, 0, maxHeight, bUseColon, options_text_template, options_dropdown_template, options_switch_template, bSwitchIsCheckbox, options_slider_template, options_button_template)
+                        if (self:GetOnEditCallback()) then
+                            self:GetOnEditCallback()(object, option.name, newValue, profileTable, profileKey)
+                        end
+                    end,
+                    min = option.minvalue,
+                    max = option.maxvalue,
+                    step = option.step,
+                    usedecimals = option.usedecimals,
+                }
+            end
         end
+
+        --at this point, the optionsTable is ready to be used on DF:BuildMenuVolatile()
+        menuOptions.align_as_pairs = true
+        menuOptions.align_as_pairs_length = 150
+        menuOptions.widget_width = 180
+
+        local optionsFrame = self:GetOptionsFrame()
+        local canvasScrollBox = self:GetCanvasScrollBox()
+        local bUseColon = true
+        local bSwitchIsCheckbox = true
+        local maxHeight = 5000
+
+        local amountOfOptions = #menuOptions
+        local optionsFrameHeight = amountOfOptions * 20
+        optionsFrame:SetHeight(optionsFrameHeight)
+
+        --templates
+        local options_text_template = detailsFramework:GetTemplate("font", "OPTIONS_FONT_TEMPLATE")
+        local options_dropdown_template = detailsFramework:GetTemplate("dropdown", "OPTIONS_DROPDOWN_TEMPLATE")
+        local options_switch_template = detailsFramework:GetTemplate("switch", "OPTIONS_CHECKBOX_TEMPLATE")
+        local options_slider_template = detailsFramework:GetTemplate("slider", "OPTIONS_SLIDER_TEMPLATE")
+        local options_button_template = detailsFramework:GetTemplate("button", "OPTIONS_BUTTON_TEMPLATE")
+
+        detailsFramework:BuildMenu(optionsFrame, menuOptions, 0, -2, maxHeight, bUseColon, options_text_template, options_dropdown_template, options_switch_template, bSwitchIsCheckbox, options_slider_template, options_button_template)
     end,
 
 }
@@ -274,7 +320,7 @@ local editorDefaultOptions = {
     height = 600,
 }
 
----@class df_editor
+---@class df_editor : frame, df_optionsmixin, df_editormixin
 ---@field options table
 ---@field editingObject uiobject
 ---@field editingProfileTable table
@@ -290,13 +336,13 @@ function detailsFramework:CreateEditor(parent, name, options)
     detailsFramework:Mixin(editorFrame, detailsFramework.EditorMixin)
     detailsFramework:Mixin(editorFrame, detailsFramework.OptionsFunctions)
 
-    options = options or {}
     editorFrame:BuildOptionsTable(editorDefaultOptions, options)
 
-    editorFrame:SetSize(options.width, options.height)
+    editorFrame:SetSize(editorFrame.options.width, editorFrame.options.height)
 
     --options frame is the frame that holds the options for the editing object, it is used as the parent frame for BuildMenuVolatile()
     local optionsFrame = CreateFrame("frame", name .. "OptionsFrame", editorFrame, "BackdropTemplate")
+    optionsFrame:SetSize(editorFrame.options.width, 5000)
 
     local canvasFrame = detailsFramework:CreateCanvasScrollBox(editorFrame, optionsFrame, name .. "CanvasScrollBox")
     canvasFrame:SetAllPoints()

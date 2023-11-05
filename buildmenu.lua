@@ -92,6 +92,45 @@ local _
 ---@field nocombat boolean can't edit when in combat
 ---@field spacement boolean gives a little of more space from the next widget
 
+local onEnterHighlight = function(self)
+    self.highlightTexture:Show()
+    if (self.parent:GetScript("OnEnter")) then
+        self.parent:GetScript("OnEnter")(self.parent)
+    end
+end
+
+local onLeaveHighlight = function(self)
+    self.highlightTexture:Hide()
+    if (self.parent:GetScript("OnLeave")) then
+        self.parent:GetScript("OnLeave")(self.parent)
+    end
+end
+
+local createOptionHighlightTexture = function(frame, label, widgetWidth)
+    frame = frame.widget or frame
+    label = label.widget or label
+    local highlightFrame = CreateFrame("frame", nil, frame)
+    highlightFrame:EnableMouse(true)
+    highlightFrame:SetWidth(widgetWidth)
+    highlightFrame:SetHeight(frame:GetHeight() + 2)
+    highlightFrame:SetFrameLevel(frame:GetFrameLevel()-1)
+    highlightFrame:SetPoint("topleft", label, "topleft", -2, 6)
+    highlightFrame:SetScript("OnEnter", onEnterHighlight)
+    highlightFrame:SetScript("OnLeave", onLeaveHighlight)
+
+    local highlightTexture = highlightFrame:CreateTexture(nil, "overlay")
+    highlightTexture:SetColorTexture(1, 1, 1, 0.1)
+    highlightTexture:SetAllPoints()
+    highlightTexture:Hide()
+
+    highlightFrame.highlightTexture = highlightTexture
+    highlightFrame.parent = frame
+
+    return highlightTexture
+end
+
+
+
 local formatOptionNameWithColon = function(text, useColon)
     if (text) then
         if (useColon) then
@@ -120,7 +159,7 @@ local getMenuWidgetVolative = function(parent, widgetType, indexTable)
     elseif (widgetType == "dropdown") then
         widgetObject = parent.widget_list_by_type[widgetType][indexTable[widgetType]]
         if (not widgetObject) then
-            widgetObject = detailsFramework:CreateDropDown(parent, function() return {} end, nil, 140, 18, nil, "$parentWidget" .. widgetType .. indexTable[widgetType])
+            widgetObject = detailsFramework:CreateDropDown(parent, function() return {} end, nil, 120, 18, nil, "$parentWidget" .. widgetType .. indexTable[widgetType])
             widgetObject.hasLabel = detailsFramework:CreateLabel(parent, "", 10, "white", "", nil, "$parentWidget" .. widgetType .. indexTable[widgetType] .. "label", "overlay")
             table.insert(parent.widget_list, widgetObject)
             table.insert(parent.widget_list_by_type[widgetType], widgetObject)
@@ -147,7 +186,7 @@ local getMenuWidgetVolative = function(parent, widgetType, indexTable)
     elseif (widgetType == "slider") then
         widgetObject = parent.widget_list_by_type[widgetType][indexTable[widgetType]]
         if (not widgetObject) then
-            widgetObject = detailsFramework:CreateSlider(parent, 140, 20, 1, 2, 1, 1, false, nil, "$parentWidget" .. widgetType .. indexTable[widgetType])
+            widgetObject = detailsFramework:CreateSlider(parent, 120, 20, 1, 2, 1, 1, false, nil, "$parentWidget" .. widgetType .. indexTable[widgetType])
             widgetObject.hasLabel = detailsFramework:CreateLabel(parent, "", 10, "white", "", nil, "$parentWidget" .. widgetType .. indexTable[widgetType] .. "label", "overlay")
 
             table.insert(parent.widget_list, widgetObject)
@@ -265,8 +304,8 @@ function detailsFramework:BuildMenuVolatile(parent, menuOptions, xOffset, yOffse
     end
     detailsFramework:ClearOptionsPanel(parent)
 
-    local currentXOffset = xOffset
-    local currentYOffset = yOffset
+    local currentXOffset = xOffset or 0
+    local currentYOffset = yOffset or 0
     local maxColumnWidth = 0
 
     local latestInlineWidget
@@ -281,8 +320,12 @@ function detailsFramework:BuildMenuVolatile(parent, menuOptions, xOffset, yOffse
         textentry = 1,
     }
 
-    height = math.abs((height or parent:GetHeight()) - math.abs(yOffset) + 20)
-    height = height * -1
+    if (height and type(height) == "number") then
+        height = math.abs((height or parent:GetHeight()) - math.abs(yOffset) + 20)
+        height = height * -1
+    else
+        height = parent:GetHeight()
+    end
 
     --normalize format types
     for index, widgetTable in ipairs(menuOptions) do
@@ -314,8 +357,10 @@ function detailsFramework:BuildMenuVolatile(parent, menuOptions, xOffset, yOffse
     --catch some options added in the hash part of the menu table
     local bUseBoxFirstOnAllWidgets = menuOptions.always_boxfirst
     local bAlignAsPairs = menuOptions.align_as_pairs
-    local nAlignAsPairsLength = menuOptions.align_as_pairs_length or 160
+    local nAlignAsPairsLength = menuOptions.align_as_pairs_string_space or 160
     local languageAddonId = menuOptions.language_addonId
+    local widgetWidth = menuOptions.widget_width
+    local widgetHeight = menuOptions.widget_height
     local languageTable
 
     if (languageAddonId) then
@@ -395,6 +440,13 @@ function detailsFramework:BuildMenuVolatile(parent, menuOptions, xOffset, yOffse
                     dropdown:Refresh()
                     dropdown:Select(widgetTable.get())
                     dropdown:SetTemplate(dropdownTemplate)
+
+                    if (widgetWidth) then
+                        dropdown:SetWidth(widgetWidth)
+                    end
+                    if (widgetHeight) then
+                        dropdown:SetHeight(widgetHeight)
+                    end
 
                     local descPhrase = getDescPhraseText(languageTable, widgetTable)
                     dropdown:SetTooltip(descPhrase)
@@ -516,7 +568,7 @@ function detailsFramework:BuildMenuVolatile(parent, menuOptions, xOffset, yOffse
                     if (widgetTable.usedecimals) then
                         slider.slider:SetValueStep(0.01)
                     else
-                        slider.slider:SetValueStep(widgetTable.step)
+                        slider.slider:SetValueStep(widgetTable.step or 1)
                     end
                     slider.useDecimals = widgetTable.usedecimals
 
@@ -525,6 +577,13 @@ function detailsFramework:BuildMenuVolatile(parent, menuOptions, xOffset, yOffse
                     slider.ivalue = slider.slider:GetValue()
 
                     slider:SetTemplate(sliderTemplate)
+
+                    if (widgetWidth) then
+                        slider:SetWidth(widgetWidth)
+                    end
+                    if (widgetHeight) then
+                        slider:SetHeight(widgetHeight)
+                    end
 
                     local descPhrase = getDescPhraseText(languageTable, widgetTable)
                     slider:SetTooltip(descPhrase)
@@ -643,7 +702,7 @@ function detailsFramework:BuildMenuVolatile(parent, menuOptions, xOffset, yOffse
                     widgetCreated = button
 
                     button:SetTemplate(buttonTemplate)
-                    button:SetSize(widgetTable.width or 120, widgetTable.height or 18)
+                    button:SetSize(widgetWidth or widgetTable.width or 120, widgetHeight or widgetTable.height or 18)
                     button:SetClickFunction(widgetTable.func, widgetTable.param1, widgetTable.param2)
 
                     local textTemplate = widgetTable.text_template or textTemplate or detailsFramework.font_templates["ORANGE_FONT_TEMPLATE"]
@@ -706,7 +765,7 @@ function detailsFramework:BuildMenuVolatile(parent, menuOptions, xOffset, yOffse
 
                     textentry:SetCommitFunction(widgetTable.func or widgetTable.set)
                     textentry:SetTemplate(widgetTable.template or widgetTable.button_template or buttonTemplate)
-                    textentry:SetSize(widgetTable.width or 120, widgetTable.height or 18)
+                    textentry:SetSize(widgetWidth or widgetTable.width or 120, widgetHeight or widgetTable.height or 18)
 
                     local descPhrase = getDescPhraseText(languageTable, widgetTable)
                     textentry:SetTooltip(descPhrase)
@@ -815,20 +874,9 @@ end
 	---the menuOptions consists of a table with several tables inside in array, each table is a widget to be created
 	---class df_menu_label is used when the sub table of menuOptions has a key named "type" with the value "label" or "text"
 	function detailsFramework:BuildMenu(parent, menuOptions, xOffset, yOffset, height, useColon, textTemplate, dropdownTemplate, switchTemplate, switchIsCheckbox, sliderTemplate, buttonTemplate, valueChangeHook)
-		if (not parent.widget_list) then
-			detailsFramework:SetAsOptionsPanel(parent)
-		end
-
-		local currentXOffset = xOffset
-		local currentYOffset = yOffset
-		local maxColumnWidth = 0
-
 		--how many widgets has been created on this line loop pass
 		local amountLineWidgetCreated = 0
 		local latestInlineWidget
-
-		height = math.abs((height or parent:GetHeight()) - math.abs(yOffset) + 20)
-		height = height * -1
 
 		--normalize format types
 		for index, widgetTable in ipairs(menuOptions) do
@@ -859,6 +907,30 @@ end
 
 		--catch some options added in the hash part of the menu table
 		local bUseBoxFirstOnAllWidgets = menuOptions.always_boxfirst
+        local widgetWidth = menuOptions.widget_width --a width to be used on all widgets
+        local widgetHeight = menuOptions.widget_height --a height to be used on all widgets
+        local bAlignAsPairs = menuOptions.align_as_pairs
+        local nAlignAsPairsLength = menuOptions.align_as_pairs_string_space or 160
+        local nAlignAsPairsSpacing = menuOptions.align_as_pairs_spacing or 20
+
+        --if a scrollbox is passed, the height can be ignored
+        --the scrollBox child will be used as the parent, and the height of the child will be resized to fit the widgets
+        local bUseScrollFrame = menuOptions.use_scrollframe
+        local biggestColumnHeight = 0 --used to resize the scrollbox child when a scrollbox is passed
+
+        if (not bUseScrollFrame) then
+            if (height and type(height) == "number") then
+                height = math.abs((height or parent:GetHeight()) - math.abs(yOffset) + 20)
+                height = height * -1
+            else
+                height = parent:GetHeight()
+            end
+        else
+            local width, height = parent:GetSize()
+            parent = parent:GetScrollChild()
+            parent:SetSize(width, height)
+        end
+
 		local languageAddonId = menuOptions.language_addonId
 		local languageTable
 
@@ -866,9 +938,18 @@ end
 			languageTable = DetailsFramework.Language.GetLanguageTable(languageAddonId)
 		end
 
+		if (not parent.widget_list) then
+			detailsFramework:SetAsOptionsPanel(parent)
+		end
+
+        local currentXOffset = xOffset or 0
+        local currentYOffset = yOffset or 0
+        local maxColumnWidth = 0 --biggest width of widget + text size on the current column loop pass
+        local maxWidgetWidth = 0 --biggest widget width on the current column loop pass
+        local maxWidth = parent:GetWidth() --total width the buildmenu can use - not in use
+
 		for index, widgetTable in ipairs(menuOptions) do
 			if (not widgetTable.hidden) then
-
 				local widgetCreated
 				if (latestInlineWidget) then
 					if (not widgetTable.inline) then
@@ -916,21 +997,18 @@ end
 
 					local dropdown
 					if (widgetTable.type == "selectfont") then
-						dropdown = detailsFramework:CreateFontDropDown(parent, widgetTable.set, widgetTable.get(), 140, 18, nil, "$parentWidget" .. index, dropdownTemplate)
+						dropdown = detailsFramework:CreateFontDropDown(parent, widgetTable.set, widgetTable.get(), widgetWidth or 140, widgetHeight or 18, nil, "$parentWidget" .. index, dropdownTemplate)
 
 					elseif (widgetTable.type == "selectcolor") then
-						local func = detailsFramework:CreateColorListGenerator(widgetTable.set)
-						dropdown:SetFunction(func)
+                        dropdown = detailsFramework:CreateColorDropDown(parent, widgetTable.set, widgetTable.get(), widgetWidth or 140, widgetHeight or 18, nil, "$parentWidget" .. index, dropdownTemplate)
 
 					elseif (widgetTable.type == "selectanchor") then
-						local func = detailsFramework:CreateAnchorPointListGenerator(widgetTable.set)
-						dropdown:SetFunction(func)
+						dropdown = detailsFramework:CreateAnchorPointDropDown(parent, widgetTable.set, widgetTable.get(), widgetWidth or 140, widgetHeight or 18, nil, "$parentWidget" .. index, dropdownTemplate)
 
 					elseif (widgetTable.type == "selectoutline") then
-						local func = detailsFramework:CreateOutlineListGenerator(widgetTable.set)
-						dropdown:SetFunction(func)
+						dropdown = detailsFramework:CreateOutlineDropDown(parent, widgetTable.set, widgetTable.get(), widgetWidth or 140, widgetHeight or 18, nil, "$parentWidget" .. index, dropdownTemplate)
 					else
-						dropdown = detailsFramework:NewDropDown(parent, nil, "$parentWidget" .. index, nil, 140, 18, widgetTable.values, widgetTable.get(), dropdownTemplate)
+						dropdown = detailsFramework:NewDropDown(parent, nil, "$parentWidget" .. index, nil, widgetWidth or 140, widgetHeight or 18, widgetTable.values, widgetTable.get(), dropdownTemplate)
 					end
 
 					local descPhraseId = getDescripttionPhraseID(widgetTable, languageAddonId, languageTable)
@@ -949,8 +1027,15 @@ end
 						C_Timer.After(0.1, function() dropdown:Select(dropdown:GetValue()) end)
 					end
 
-					dropdown:SetPoint("left", label, "right", 2, 0)
-					label:SetPoint(currentXOffset, currentYOffset)
+                    if (bAlignAsPairs) then
+                        label:SetPoint(currentXOffset, currentYOffset)
+                        dropdown:SetPoint("left", label, "left", nAlignAsPairsLength, 0)
+                        createOptionHighlightTexture(dropdown, label, (widgetWidth or 140) + nAlignAsPairsLength + 5)
+                    else
+                        dropdown:SetPoint("left", label, "right", 2, 0)
+                        label:SetPoint(currentXOffset, currentYOffset)
+                    end
+
 					dropdown.hasLabel = label
 
 					--global callback
@@ -973,6 +1058,10 @@ end
 					if (widgetTotalSize > maxColumnWidth) then
 						maxColumnWidth = widgetTotalSize
 					end
+
+                    if (dropdown:GetWidth() > maxWidgetWidth) then
+                        maxWidgetWidth = dropdown:GetWidth()
+                    end
 
 					--store the widget created into the overall table and the widget by type
 					table.insert(parent.widget_list, dropdown)
@@ -1020,20 +1109,26 @@ end
 					local namePhraseId = getNamePhraseID(widgetTable, languageAddonId, languageTable, true)
 					DetailsFramework.Language.RegisterObjectWithDefault(languageAddonId, label.widget, namePhraseId, formatOptionNameWithColon(widgetTable.name, useColon))
 
-					if (widgetTable.boxfirst or bUseBoxFirstOnAllWidgets) then
-						switch:SetPoint(currentXOffset, currentYOffset)
-						label:SetPoint("left", switch, "right", 2)
+                    if (bAlignAsPairs) then
+                        label:SetPoint(currentXOffset, currentYOffset)
+                        switch:SetPoint("left", label, "left", nAlignAsPairsLength, 0)
+                        createOptionHighlightTexture(switch, label, (widgetWidth or 140) + nAlignAsPairsLength + 5)
+                    else
+                        if (widgetTable.boxfirst or bUseBoxFirstOnAllWidgets) then
+                            switch:SetPoint(currentXOffset, currentYOffset)
+                            label:SetPoint("left", switch, "right", 2)
 
-						local nextWidgetTable = menuOptions[index+1]
-						if (nextWidgetTable) then
-							if (nextWidgetTable.type ~= "blank" and nextWidgetTable.type ~= "breakline" and nextWidgetTable.type ~= "toggle" and nextWidgetTable.type ~= "color") then
-								extraPaddingY = 4
-							end
-						end
-					else
-						label:SetPoint(currentXOffset, currentYOffset)
-						switch:SetPoint("left", label, "right", 2, 0)
-					end
+                            local nextWidgetTable = menuOptions[index+1]
+                            if (nextWidgetTable) then
+                                if (nextWidgetTable.type ~= "blank" and nextWidgetTable.type ~= "breakline" and nextWidgetTable.type ~= "toggle" and nextWidgetTable.type ~= "color") then
+                                    extraPaddingY = 4
+                                end
+                            end
+                        else
+                            label:SetPoint(currentXOffset, currentYOffset)
+                            switch:SetPoint("left", label, "right", 2, 0)
+                        end
+                    end
 					switch.hasLabel = label
 
 					if (widgetTable.id) then
@@ -1044,6 +1139,10 @@ end
 					if (widgetTotalSize > maxColumnWidth) then
 						maxColumnWidth = widgetTotalSize
 					end
+
+                    if (switch:GetWidth() > maxWidgetWidth) then
+                        maxWidgetWidth = switch:GetWidth()
+                    end
 
 					--store the widget created into the overall table and the widget by type
 					table.insert(parent.widget_list, switch)
@@ -1057,7 +1156,7 @@ end
 
 					assert(widgetTable.get, "DetailsFramework:BuildMenu(): .get not found in the widget table for 'range'")
 					local bIsDecimals = widgetTable.usedecimals
-					local slider = detailsFramework:NewSlider(parent, nil, "$parentWidget" .. index, nil, 140, 20, widgetTable.min, widgetTable.max, widgetTable.step, widgetTable.get(),  bIsDecimals, nil, nil, sliderTemplate)
+					local slider = detailsFramework:NewSlider(parent, nil, "$parentWidget" .. index, nil, widgetWidth or 140, widgetHeight or 20, widgetTable.min, widgetTable.max, widgetTable.step, widgetTable.get(),  bIsDecimals, nil, nil, sliderTemplate)
 
 					local descPhraseId = getDescripttionPhraseID(widgetTable, languageAddonId, languageTable)
 					DetailsFramework.Language.RegisterTableKeyWithDefault(languageAddonId, slider, "have_tooltip", descPhraseId, widgetTable.desc)
@@ -1087,8 +1186,14 @@ end
 					local namePhraseId = getNamePhraseID(widgetTable, languageAddonId, languageTable, true)
 					DetailsFramework.Language.RegisterObjectWithDefault(languageAddonId, label.widget, namePhraseId, formatOptionNameWithColon(widgetTable.name, useColon))
 
-					slider:SetPoint("left", label, "right", 2)
-					label:SetPoint(currentXOffset, currentYOffset)
+                    if (bAlignAsPairs) then
+                        label:SetPoint(currentXOffset, currentYOffset)
+                        slider:SetPoint("left", label, "left", nAlignAsPairsLength, 0)
+                        createOptionHighlightTexture(slider, label, (widgetWidth or 140) + nAlignAsPairsLength + 5)
+                    else
+					    slider:SetPoint("left", label, "right", 2)
+					    label:SetPoint(currentXOffset, currentYOffset)
+                    end
 					slider.hasLabel = label
 
 					if (widgetTable.id) then
@@ -1099,6 +1204,10 @@ end
 					if (widgetTotalSize > maxColumnWidth) then
 						maxColumnWidth = widgetTotalSize
 					end
+
+                    if (slider:GetWidth() > maxWidgetWidth) then
+                        maxWidgetWidth = slider:GetWidth()
+                    end
 
 					--store the widget created into the overall table and the widget by type
 					table.insert(parent.widget_list, slider)
@@ -1137,14 +1246,20 @@ end
 					local namePhraseId = getNamePhraseID(widgetTable, languageAddonId, languageTable, true)
 					DetailsFramework.Language.RegisterObjectWithDefault(languageAddonId, label.widget, namePhraseId, formatOptionNameWithColon(widgetTable.name, useColon))
 
-					if (widgetTable.boxfirst or bUseBoxFirstOnAllWidgets) then
-						label:SetPoint("left", colorpick, "right", 2)
-						colorpick:SetPoint(currentXOffset, currentYOffset)
-						extraPaddingY = 1
-					else
-						colorpick:SetPoint("left", label, "right", 2)
-						label:SetPoint(currentXOffset, currentYOffset)
-					end
+                    if (bAlignAsPairs) then
+                        label:SetPoint(currentXOffset, currentYOffset)
+                        colorpick:SetPoint("left", label, "left", nAlignAsPairsLength, 0)
+                        createOptionHighlightTexture(colorpick, label, (widgetWidth or 140) + nAlignAsPairsLength + 5)
+                    else
+                        if (widgetTable.boxfirst or bUseBoxFirstOnAllWidgets) then
+                            label:SetPoint("left", colorpick, "right", 2)
+                            colorpick:SetPoint(currentXOffset, currentYOffset)
+                            extraPaddingY = 1
+                        else
+                            colorpick:SetPoint("left", label, "right", 2)
+                            label:SetPoint(currentXOffset, currentYOffset)
+                        end
+                    end
 
 					colorpick.hasLabel = label
 
@@ -1157,6 +1272,10 @@ end
 						maxColumnWidth = widgetTotalSize
 					end
 
+                    if (colorpick:GetWidth() > maxWidgetWidth) then
+                        maxWidgetWidth = colorpick:GetWidth()
+                    end
+
 					--store the widget created into the overall table and the widget by type
 					table.insert(parent.widget_list, colorpick)
 					table.insert(parent.widget_list_by_type.color, colorpick)
@@ -1167,7 +1286,7 @@ end
 				elseif (widgetTable.type == "execute") then
 					---@cast widgetTable df_menu_button
 
-					local button = detailsFramework:NewButton(parent, nil, "$parentWidget" .. index, nil, 120, 18, widgetTable.func, widgetTable.param1, widgetTable.param2, nil, "", nil, buttonTemplate, textTemplate)
+					local button = detailsFramework:NewButton(parent, nil, "$parentWidget" .. index, nil, widgetWidth or 120, widgetHeight or 18, widgetTable.func, widgetTable.param1, widgetTable.param2, nil, "", nil, buttonTemplate, textTemplate)
 
 					local namePhraseId = getNamePhraseID(widgetTable, languageAddonId, languageTable, true)
 					DetailsFramework.Language.RegisterObjectWithDefault(languageAddonId, button.widget, namePhraseId, widgetTable.name)
@@ -1176,17 +1295,17 @@ end
 						button:InstallCustomTexture()
 					end
 
-					if (widgetTable.inline) then
-						if (latestInlineWidget) then
-							button:SetPoint("left", latestInlineWidget, "right", 2, 0)
-							latestInlineWidget = button
-						else
-							button:SetPoint(currentXOffset, currentYOffset)
-							latestInlineWidget = button
-						end
-					else
-						button:SetPoint(currentXOffset, currentYOffset)
-					end
+                    if (widgetTable.inline) then
+                        if (latestInlineWidget) then
+                            button:SetPoint("left", latestInlineWidget, "right", 2, 0)
+                            latestInlineWidget = button
+                        else
+                            button:SetPoint(currentXOffset, currentYOffset)
+                            latestInlineWidget = button
+                        end
+                    else
+                        button:SetPoint(currentXOffset, currentYOffset)
+                    end
 
 					local descPhraseId = getDescripttionPhraseID(widgetTable, languageAddonId, languageTable)
 					DetailsFramework.Language.RegisterTableKeyWithDefault(languageAddonId, button, "have_tooltip", descPhraseId, widgetTable.desc)
@@ -1209,10 +1328,10 @@ end
 						parent.widgetids [widgetTable.id] = button
 					end
 
-					if (widgetTable.width) then
+					if (widgetTable.width and not widgetWidth) then
 						button:SetWidth(widgetTable.width)
 					end
-					if (widgetTable.height) then
+					if (widgetTable.height and not widgetHeight) then
 						button:SetHeight(widgetTable.height)
 					end
 
@@ -1220,6 +1339,10 @@ end
 					if (widgetTotalSize > maxColumnWidth) then
 						maxColumnWidth = widgetTotalSize
 					end
+
+                    if (button:GetWidth() > maxWidgetWidth) then
+                        maxWidgetWidth = button:GetWidth()
+                    end
 
 					--store the widget created into the overall table and the widget by type
 					table.insert(parent.widget_list, button)
@@ -1231,7 +1354,7 @@ end
 				elseif (widgetTable.type == "textentry") then
 					---@cast widgetTable df_menu_textentry
 
-					local textentry = detailsFramework:CreateTextEntry(parent, widgetTable.func or widgetTable.set, 120, 18, nil, "$parentWidget" .. index, nil, buttonTemplate)
+					local textentry = detailsFramework:CreateTextEntry(parent, widgetTable.func or widgetTable.set, widgetWidth or 120, widgetHeight or 18, nil, "$parentWidget" .. index, nil, buttonTemplate)
 					textentry.align = widgetTable.align or "left"
 
 					local descPhraseId = getDescripttionPhraseID(widgetTable, languageAddonId, languageTable)
@@ -1248,8 +1371,15 @@ end
 					local namePhraseId = getNamePhraseID(widgetTable, languageAddonId, languageTable, true)
 					DetailsFramework.Language.RegisterObjectWithDefault(languageAddonId, label.widget, namePhraseId, formatOptionNameWithColon(widgetTable.name, useColon))
 
-					textentry:SetPoint("left", label, "right", 2)
-					label:SetPoint(currentXOffset, currentYOffset)
+                    if (bAlignAsPairs) then
+                        label:SetPoint(currentXOffset, currentYOffset)
+                        textentry:SetPoint("left", label, "left", nAlignAsPairsLength, 0)
+                        createOptionHighlightTexture(textentry, label, (widgetWidth or 140) + nAlignAsPairsLength + 5)
+                    else
+					    textentry:SetPoint("left", label, "right", 2)
+					    label:SetPoint(currentXOffset, currentYOffset)
+                    end
+
 					textentry.hasLabel = label
 
 					--hook list
@@ -1267,6 +1397,10 @@ end
 					if (widgetTotalSize > maxColumnWidth) then
 						maxColumnWidth = widgetTotalSize
 					end
+
+                    if (textentry:GetWidth() > maxWidgetWidth) then
+                        maxWidgetWidth = textentry:GetWidth()
+                    end
 
 					--store the widget created into the overall table and the widget by type
 					table.insert(parent.widget_list, textentry)
@@ -1292,14 +1426,35 @@ end
 					currentYOffset = currentYOffset - extraPaddingY
 				end
 
-				if (widgetTable.type == "breakline" or currentYOffset < height) then
-					currentYOffset = yOffset
-					currentXOffset = currentXOffset + maxColumnWidth + 20
-					amountLineWidgetCreated = 0
-					maxColumnWidth = 0
-				end
+                if (bUseScrollFrame) then
+                    if (widgetTable.type == "breakline") then
+                        biggestColumnHeight = math.min(currentYOffset, biggestColumnHeight)
+                        currentYOffset = yOffset
+
+                        if (bAlignAsPairs) then
+                            currentXOffset = currentXOffset + nAlignAsPairsLength + (widgetWidth or maxWidgetWidth) + nAlignAsPairsSpacing
+                        else
+                            currentXOffset = currentXOffset + maxColumnWidth + 20
+                        end
+
+                        amountLineWidgetCreated = 0
+                        maxColumnWidth = 0
+                        maxWidgetWidth = 0
+                    end
+                else
+                    if (widgetTable.type == "breakline" or currentYOffset < height) then
+                        currentYOffset = yOffset
+                        currentXOffset = currentXOffset + maxColumnWidth + 20
+                        amountLineWidgetCreated = 0
+                        maxColumnWidth = 0
+                    end
+                end
 			end
 		end
+
+        if (bUseScrollFrame) then
+            parent:SetHeight(biggestColumnHeight * -1)
+        end
 
 		detailsFramework.RefreshUnsafeOptionsWidgets()
 	end

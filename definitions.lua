@@ -1,14 +1,16 @@
 
 ---@class df_table_functions
 ---@field find fun(tbl:table, value:any) : number? find the index of a value in a array
----@field addunique fun(tbl:table, value:any) : boolean add a value to an array if it doesn't exist yet
----@field reverse fun(tbl:table) reverse the order of an array
----@field append fun(tbl1:table, tbl2:table) append the array of table2 to table1
----@field duplicate fun(tblReceiving:table, tblGiving:table) copy the values from table2 to table1 overwriting existing values, ignores __index and __newindex, keys pointing to a UIObject are preserved
----@field copy fun(tblReceiving:table, tblGiving:table) copy the values from table2 to table1 overwriting existing values, ignores __index and __newindex, threat UIObjects as regular tables
----@field deploy fun(tblReceiving:table, tblGiving:table) copy keys/values that does exist on tblGiving but not in tblReceiving
----@field copytocompress fun(tblReceiving:table, tblGiving:table) copy the values from table2 to table1 overwriting existing values, ignores __index, functions and tables with a 'GetObjectType' key
+---@field addunique fun(tbl:table, index:any, value:any) : boolean add a value to an array if it doesn't exist yet, if the index is omitted the value will be added to the end of the array
+---@field reverse fun(tbl:table) : table reverse the order of an array
+---@field append fun(tbl1:table, tbl2:table) : table append the array of table2 to table1
+---@field duplicate fun(tblReceiving:table, tblGiving:table) : table copy the values from table2 to table1 overwriting existing values, ignores __index and __newindex, keys pointing to a UIObject are preserved
+---@field copy fun(tblReceiving:table, tblGiving:table) : table copy the values from table2 to table1 overwriting existing values, ignores __index and __newindex, threat UIObjects as regular tables
+---@field deploy fun(tblReceiving:table, tblGiving:table) : table copy keys/values that does exist on tblGiving but not in tblReceiving
+---@field copytocompress fun(tblReceiving:table, tblGiving:table) : table copy the values from table2 to table1 overwriting existing values, ignores __index, functions and tables with a 'GetObjectType' key
 ---@field removeduplicate fun(tbl1:table, tbl2:table) remove the keys from table1 which also exists in table2 with the same value
+---@field getfrompath fun(tbl:table, path:string) : any get a value from a table using a path, e.g. getfrompath(tbl, "a.b.c") is the same as tbl.a.b.c
+---@field setfrompath fun(tbl:table, path:string, value:any) : boolean set the value of a table using a path, e.g. setfrompath(tbl, "a.b.c", 10) is the same as tbl.a.b.c = 10
 ---@field dump fun(tbl:table) : string dump a table to a string
 
 ---@class df_language : table
@@ -51,6 +53,7 @@
 ---@field Language df_language
 ---@field KeybindMixin df_keybindmixin
 ---@field ScriptHookMixin df_scripthookmixin
+---@field EditorMixin df_editormixin
 ---@field ClassCache {ID:number, Name:string, FileString:string, Texture:string, TexCoord:number[]}[] only available after calling GetClassList()
 ---@field Math df_math
 ---@field FontOutlineFlags table<outline, boolean>
@@ -128,8 +131,9 @@
 ---@field CreateScrollBox fun(self:table, parent:frame, name:string, refreshFunc:function, data:table, width:number, height:number, lineAmount:number, lineHeight:number, createLineFunc:function?, autoAmount:boolean?, noScroll:boolean?, noBackdrop:boolean?) : df_scrollbox
 ---@field CreateAuraScrollBox fun(self:table, parent:frame, name:string?, data:table?, onRemoveCallback:function?, options:table?) : df_aurascrollbox
 ---@field CreateGridScrollBox fun(self:table, parent:frame, name:string?, refreshFunc:function, data:table?, createColumnFrameFunc:function, options:table?) : df_gridscrollbox
+---@field CreateCanvasScrollBox fun(self:table, parent:frame, child:frame?, name:string?, options:table?) : df_canvasscrollbox
 ---@field GetSizeFromPercent fun(self:table, uiObject:uiobject, percent:number) : number get the min size of a uiObject and multiply it by the percent passed
+---@field BuildMenu fun(self:table, parent:frame, menuOptions:df_menu_table[], xOffset:number?, yOffset:number?, height:number?, useColon:boolean?, textTemplate:table?, dropdownTemplate:table?, switchTemplate:table?, switchIsCheckbox:boolean?, sliderTemplate:table?, buttonTemplate:table?, valueChangeHook:function?)
+---@field BuildMenuVolatile fun(self:table, parent:frame, menuOptions:df_menu_table[], xOffset:number?, yOffset:number?, height:number?, useColon:boolean?, textTemplate:table?, dropdownTemplate:table?, switchTemplate:table?, switchIsCheckbox:boolean?, sliderTemplate:table?, buttonTemplate:table?, valueChangeHook:function?)
 ---@field 
 ---@field 
-
---DF:BuildMenuVolatile(parent, menuOptions, xOffset, yOffset, height, useColon, textTemplate, dropdownTemplate, switchTemplate, switchIsCheckbox, sliderTemplate, buttonTemplate, valueChangeHook)
