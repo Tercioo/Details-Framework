@@ -1006,10 +1006,10 @@ function DropDownMetaFunctions:SetTemplate(template)
 	self.template = template
 
 	if (template.width) then
-		self:SetWidth(template.width)
+		PixelUtil.SetWidth(self.dropdown, template.width)
 	end
 	if (template.height) then
-		self:SetHeight(template.height)
+		PixelUtil.SetWidth(self.dropdown, template.height)
 	end
 
 	if (template.backdrop) then
@@ -1252,8 +1252,7 @@ function DF:NewDropDown(parent, container, name, member, width, height, func, de
 	end
 
 	dropDownObject.dropdown = DF:CreateNewDropdownFrame(parent, name)
-	dropDownObject.dropdown:SetWidth(width)
-	dropDownObject.dropdown:SetHeight(height)
+	PixelUtil.SetSize(dropDownObject.dropdown, width, height)
 
 	dropDownObject.container = container
 	dropDownObject.widget = dropDownObject.dropdown
