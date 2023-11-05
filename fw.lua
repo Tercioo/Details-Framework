@@ -1,6 +1,6 @@
 
 
-local dversion = 480
+local dversion = 481
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary(major, minor)
 
@@ -493,6 +493,55 @@ function DF.table.find(t, value)
 	end
 end
 
+---get a value from a table using a path, e.g. getfrompath(tbl, "a.b.c") is the same as tbl.a.b.c
+---@param t table
+---@param path string
+---@return any
+function DF.table.getfrompath(t, path)
+	if (path:match("%.") or path:match("%[")) then
+		local value
+
+		for key in path:gmatch("[%w_]+") do
+			value = t[key] or t[tonumber(key)]
+
+			--check if the value is nil, if it is, the key does not exists in the table
+			if (not value) then
+				return
+			end
+
+			--update t for the next iteration
+			t = value
+		end
+
+		return value
+	end
+end
+
+---set the value of a table using a path, e.g. setfrompath(tbl, "a.b.c", 10) is the same as tbl.a.b.c = 10
+---@param t table
+---@param path string
+---@param value any
+---@return boolean?
+function DF.table.setfrompath(t, path, value)
+	if (path:match("%.") or path:match("%[")) then
+		local lastTable
+		local lastKey
+
+		for key in path:gmatch("[%w_]+") do
+			lastTable = t
+			lastKey = key
+
+			--update t for the next iteration
+			t = t[key] or t[tonumber(key)]
+		end
+
+		if (lastTable and lastKey) then
+			lastTable[lastKey] = value
+			return true
+		end
+	end
+end
+
 ---find the value inside the table, and it it's not found, add it
 ---@param t table
 ---@param index integer|any
@@ -691,10 +740,10 @@ local function tableToString(t, resultString, deep, seenTables)
 			resultString = resultString .. space .. "[\"" .. key .. "\"] = \"|cFFfff1c1" .. value .. "|r\",\n"
 
 		elseif (valueType == "number") then
-			resultString = resultString .. space .. "[\"" .. key .. "\"] = |cFFffc1f4" .. value .. "|r,\n"
+			resultString = resultString .. space .. "[\"" .. key .. "\"] = |cFF94CEA8" .. value .. "|r,\n"
 
 		elseif (valueType == "function") then
-			resultString = resultString .. space .. "[\"" .. key .. "\"] = function()end,\n"
+			resultString = resultString .. space .. "[\"" .. key .. "\"] = |cFFC586C0function|r,\n"
 
 		elseif (valueType == "boolean") then
 			resultString = resultString .. space .. "[\"" .. key .. "\"] = |cFF99d0ff" .. (value and "true" or "false") .. "|r,\n"
@@ -708,7 +757,6 @@ local function tableToStringSafe(t)
     local seenTables = {}
     return tableToString(t, nil, 0, seenTables)
 end
-
 
 ---get the contends of table 't' and return it as a string
 ---@param t table
