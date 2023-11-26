@@ -1,6 +1,6 @@
 
 
-local dversion = 482
+local dversion = 483
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary(major, minor)
 
@@ -1317,7 +1317,7 @@ function DF:SetFontOutline(fontString, outline)
 			outline = "OUTLINE"
 
 		elseif (type(outline) == "boolean" and not outline) then
-			outline = "NONE"
+			outline = "" --"NONE"
 
 		elseif (outline == 1) then
 			outline = "OUTLINE"
@@ -1326,6 +1326,7 @@ function DF:SetFontOutline(fontString, outline)
 			outline = "THICKOUTLINE"
 		end
 	end
+	outline = (not outline or outline == "NONE") and "" or outline
 
 	fontString:SetFont(font, fontSize, outline)
 end
