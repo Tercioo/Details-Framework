@@ -519,12 +519,16 @@ detailsFramework.EditorMixin = {
     ---@param anchorSettings df_anchor
     StartObjectMovement = function(self, anchorSettings)
         local object = self:GetEditingObject()
-        local moverFrame = self:GetMoverFrame()
 
-        --self:UpdateGuideLinesAnchors()
+        local moverFrame = self:GetMoverFrame()
+        moverFrame:EnableMouse(true)
+        moverFrame:SetMovable(true)
+        moverFrame:ClearAllPoints()
+        moverFrame:Show()
 
         --update guidelines
         if (self:GetEditingOptions().use_guide_lines) then
+            --self:UpdateGuideLinesAnchors()
             --show all four guidelines
             for side, texture in pairs(self.moverGuideLines) do
                 texture:Show()
@@ -533,28 +537,43 @@ detailsFramework.EditorMixin = {
 
         local optionsFrame = self:GetOptionsFrame()
 
-        moverFrame:EnableMouse(true)
-        moverFrame:SetMovable(true)
-        moverFrame:ClearAllPoints()
-        moverFrame:SetSize(4, 4)
-        moverFrame:SetBackdropColor(1, 1, 0, 1)
-        moverFrame:SetBackdropBorderColor(1, 1, 0, 1)
-        moverFrame:Show()
-
+        local objectWidth, objectHeight = object:GetSize()
+        moverFrame:SetSize(objectWidth, objectHeight)
         detailsFramework:SetAnchor(moverFrame, anchorSettings, object:GetParent())
-        object:SetPoint("topleft", moverFrame, "center", 0, 0)
-
         local currentPosX, currentPosY
 
         moverFrame:SetScript("OnMouseDown", function()
+            object:ClearAllPoints()
+            object:SetPoint("topleft", moverFrame, "topleft", 0, 0)
+
             currentPosX, currentPosY = moverFrame:GetCenter()
-            moverFrame:StartMoving()
             moverFrame.bIsMoving = true
+            moverFrame:StartMoving()
         end)
 
         moverFrame:SetScript("OnMouseUp", function()
             moverFrame:StopMovingOrSizing()
             moverFrame.bIsMoving = false
+
+            local originX = anchorSettings.x
+            local originY = anchorSettings.y
+
+            local newPosX, newPosY = moverFrame:GetCenter()
+
+            local xOffset = newPosX - currentPosX
+            local yOffset = newPosY - currentPosY
+
+            anchorSettings.x = originX + xOffset
+            anchorSettings.y = originY + yOffset
+
+            local anchorXSlider = optionsFrame:GetWidgetById("anchoroffsetx")
+            anchorXSlider:SetValueNoCallback(anchorSettings.x)
+
+            local anchorYSlider = optionsFrame:GetWidgetById("anchoroffsety")
+            anchorYSlider:SetValueNoCallback(anchorSettings.y)
+
+            object:ClearAllPoints()
+            detailsFramework:SetAnchor(object, anchorSettings, object:GetParent())
         end)
 
         --detailsFramework:SetAnchor(moverFrame, anchorSettings)
@@ -562,7 +581,7 @@ detailsFramework.EditorMixin = {
 
         moverFrame:SetScript("OnUpdate", function()
             --if the object isn't moving, make the mover follow the object position
-            if (moverFrame.bIsMoving) then
+            if (false and moverFrame.bIsMoving) then
                 --object:ClearAllPoints()
                 --object:SetPoint("topleft", moverFrame, "topleft", 0, 0)
 
@@ -877,7 +896,8 @@ function detailsFramework:CreateEditor(parent, name, options)
     local moverFrame = CreateFrame("frame", "$parentMoverFrame", OTTFrame, "BackdropTemplate")
     moverFrame:SetClampedToScreen(true)
     detailsFramework:ApplyStandardBackdrop(moverFrame)
-
+    moverFrame:SetBackdropColor(.10, .10, .10, 0)
+    moverFrame.__background:SetAlpha(0.1)
     editorFrame.moverFrame = moverFrame
 
     editorFrame:CreateMoverGuideLines()
