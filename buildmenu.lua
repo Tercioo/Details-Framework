@@ -265,8 +265,8 @@ local setToggleProperties = function(parent, widget, widgetTable, currentXOffset
         end
     else
         if (widgetTable.boxfirst or bUseBoxFirstOnAllWidgets) then
-            widget:SetPoint("left", label, "right", 2, 0)
-            label:SetPoint("topleft", parent, "topleft", currentXOffset, currentYOffset)
+            label:SetPoint("left", widget.widget or widget, "right", 2, 0)
+            widget:SetPoint("topleft", parent, "topleft", currentXOffset, currentYOffset)
 
             local nextWidgetTable = menuOptions[index+1]
             if (nextWidgetTable) then
