@@ -767,6 +767,9 @@ local AutoComplete_OnTextChanged = function(editboxWidget, byUser, capsule)
 		editboxWidget.ignore_textchange = nil
 	end
 	capsule.characters_count = chars_now
+
+	--call the other hooks for the widget
+	capsule:RunHooksForWidget("OnTextChanged", editboxWidget, byUser, capsule)
 end
 
 local AutoComplete_OnSpacePressed = function(editboxWidget, capsule)
