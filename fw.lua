@@ -1,6 +1,6 @@
 
 
-local dversion = 507
+local dversion = 508
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary(major, minor)
 
@@ -48,6 +48,12 @@ end
 function DF:MsgWarning(msg, ...)
 	print("|cFFFFFFAA" .. (self.__name or "Details!Framework") .. "|r |cFFFFAA00[Warning]|r", msg, ...)
 end
+
+DF.DefaultRoundedCornerPreset = {
+	roundness = 6,
+	color = {.1, .1, .1, 0.98},
+	border_color = {.05, .05, .05, 0.834},
+}
 
 DF.internalFunctions = DF.internalFunctions or {}
 
@@ -503,6 +509,16 @@ function DF:FadeFrame(frame, t)
 		frame.fading_in = false
 		frame:SetAlpha(0)
 		frame:Hide()
+	end
+end
+
+------------------------------------------------------------------------------------------------------------
+function DF:RandomBool(odds)
+	if (odds) then
+		local chance = math.random()
+		return chance <= odds
+	else
+		return math.random(1, 2) == 1
 	end
 end
 
