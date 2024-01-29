@@ -1,6 +1,6 @@
 
 
-local dversion = 508
+local dversion = 509
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary(major, minor)
 
@@ -820,6 +820,7 @@ function DF.table.deploy(t1, t2)
 	return t1
 end
 
+--/run print (DetailsFramework.table.dump({{1, 2}, {2, 3}, {4, 5}}))
 local function tableToString(t, resultString, deep, seenTables)
     resultString = resultString or ""
     deep = deep or 0
@@ -869,7 +870,11 @@ local function tableToString(t, resultString, deep, seenTables)
 			resultString = resultString .. space .. "[\"" .. key .. "\"] = \"|cFFfff1c1" .. value .. "|r\",\n"
 
 		elseif (valueType == "number") then
-			resultString = resultString .. space .. "[\"" .. key .. "\"] = |cFF94CEA8" .. value .. "|r,\n"
+			if (type(key) == "number") then
+				resultString = resultString .. space .. "[" .. key .. "] = |cFFffc1f4" .. value .. "|r,\n"
+			else
+				resultString = resultString .. space .. "[\"" .. key .. "\"] = |cFF94CEA8" .. value .. "|r,\n"
+			end
 
 		elseif (valueType == "function") then
 			resultString = resultString .. space .. "[\"" .. key .. "\"] = |cFFC586C0function|r,\n"

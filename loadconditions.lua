@@ -100,7 +100,7 @@ local default_load_conditions_frame_options = {
 
 function detailsFramework:CreateLoadFilterParser(callback)
 	local filterFrame = CreateFrame("frame")
-	
+
 	if IS_WOW_PROJECT_MAINLINE then
 		filterFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 		filterFrame:RegisterEvent("TRAIT_CONFIG_LIST_UPDATED")
@@ -157,7 +157,8 @@ function detailsFramework:CreateLoadFilterParser(callback)
 			detailsFramework.CurrentPlayerRole = assignedRole
 		end
 
-		detailsFramework:QuickDispatch(callback, filterFrame.EncounterIDCached)
+		--problem: this xpcall won't tell where the error happened in the callback code
+		xpcall(callback, geterrorhandler(), filterFrame.EncounterIDCached)
 	end)
 end
 
