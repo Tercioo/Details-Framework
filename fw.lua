@@ -1,6 +1,6 @@
 
 
-local dversion = 516
+local dversion = 517
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary(major, minor)
 
@@ -5146,15 +5146,27 @@ function _G.__benchmark(bNotPrintResult)
 end
 
 function DF:PreviewTexture(texture, left, right, top, bottom)
+	if (texture and type(texture) == "table" and texture.GetObjectType and texture:GetObjectType() == "Texture") then
+		DF:Msg("PreviewTexture: you have passed a texture object (uiobject) instead of the texture atlas, filename or id.")
+	end
+
 	local preview = DetailsFrameworkTexturePreview or CreateFrame("frame", "DetailsFrameworkTexturePreview", UIParent)
 	preview:SetSize(200, 200)
 	preview:SetPoint("center")
 	preview.texture = DetailsFrameworkTexturePreviewTexture or preview:CreateTexture("DetailsFrameworkTexturePreviewTexture", "artwork")
 	preview.texture:SetAllPoints()
+	preview.fontString = DetailsFrameworkTexturePreviewFontString or preview:CreateFontString("DetailsFrameworkTexturePreviewFontString", "artwork", "GameFontNormal")
+	preview.fontString:SetPoint("center", preview, "center", 0, 0)
+
+	preview.texture:SetTexture("")
+	preview.fontString:SetText("")
 
 	--check if the texture passed is an atlas
 	if (type(texture) == "string" and C_Texture.GetAtlasInfo(texture)) then
 		preview.texture:SetAtlas(texture)
+
+	elseif (type(texture) == "string" and texture:find("|T")) then
+		preview.fontString:SetText(texture)
 
 	elseif (type(texture) == "table") then
 		preview.texture:SetTexture(texture.file or texture.filename)
