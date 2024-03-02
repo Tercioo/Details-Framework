@@ -1491,6 +1491,48 @@ end
 ---@param maxWidth number
 function DF:TruncateTextSafe(fontString, maxWidth)
 	local text = fontString:GetText()
+	local numIterations = 10
+
+	while (fontString:GetStringWidth() > maxWidth) do
+		text = strsub(text, 1, #text-1)
+		fontString:SetText(text)
+		if (#text <= 1) then
+			break
+		end
+
+		numIterations = numIterations - 1
+		if (numIterations <= 0) then
+			break
+		end
+	end
+
+	text = DF:CleanTruncateUTF8String(text)
+	fontString:SetText(text)
+end
+
+---truncate removing characters from the string until the maxWidth is reach
+---@param fontString table
+---@param maxWidth number
+function DF:TruncateText(fontString, maxWidth)
+	local text = fontString:GetText()
+
+	while (fontString:GetStringWidth() > maxWidth) do
+		text = strsub(text, 1, #text - 1)
+		fontString:SetText(text)
+		if (string.len(text) <= 1) then
+			break
+		end
+	end
+
+	text = DF:CleanTruncateUTF8String(text)
+	fontString:SetText(text)
+end
+
+---truncate removing text through a binary search with a max of 10 iterations
+---@param fontString table
+---@param maxWidth number
+function DF:TruncateTextSafeBinarySearch(fontString, maxWidth)
+	local text = fontString:GetText()
 	if text == nil or text == '' then return end
 
 	if fontString:GetUnboundedStringWidth() > maxWidth then
@@ -1521,7 +1563,7 @@ end
 ---truncate removing characters from the string until the maxWidth is reach
 ---@param fontString table
 ---@param maxWidth number
-function DF:TruncateText(fontString, maxWidth)
+function DF:TruncateTextBinarySearch(fontString, maxWidth)
 	local text = fontString:GetText()
 	if text == nil or text == '' then return end
 
