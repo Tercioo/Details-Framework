@@ -37,7 +37,7 @@ local _
 ---@field optionsFrame frame
 ---@field overTheTopFrame frame
 ---@field objectSelector df_scrollbox
----@field moverFrames df_editor_movermain
+---@field moverFrames df_editor_mover[]
 ---@field canvasScrollBox df_canvasscrollbox
 
 ---@class df_editor_attribute
@@ -69,15 +69,6 @@ local _
 ---@field startY number
 ---@field restingX number
 ---@field restingY number
-
----@class df_editor_movermain : table
----@field anchorNames string[]
----@field Hide fun(self:df_editor_movermain)
----@field Stop fun(self:df_editor_movermain)
----@field UpdatePosition fun(self:df_editor_movermain, moverFrame:df_editor_mover)
----@field Setup fun(self:df_editor_movermain, object:uiobject, registeredObject:df_editor_objectinfo, anchorSettings:df_anchor, onTickWhileMoving:function, onTickNotMoving:function)
----@field ObjectBackgroundTexture texture?
----@field bIsMoving boolean?
 
 ---@class df_editor_mover : frame
 ---@field MovingInfo df_editor_mover_movinginfo
@@ -269,7 +260,7 @@ local attributes = {
 ---@field CreateMoverGuideLines fun(self:df_editor)
 ---@field GetOverTheTopFrame fun(self:df_editor):frame
 ---@field CreateMoverFrames fun(self:df_editor):df_editor_mover[]
----@field GetMoverFrames fun(self:df_editor):df_editor_movermain
+---@field GetMoverFrames fun(self:df_editor):df_editor_move
 ---@field StartObjectMovement fun(self:df_editor, anchorSettings:df_anchor)
 ---@field StopObjectMovement fun(self:df_editor)
 ---@field RegisterObject fun(self:df_editor, object:uiobject, localizedLabel:string, id:any, profileTable:table, subTablePath:string, profileKeyMap:table, extraOptions:table?, callback:function?, options:df_editobjectoptions?, refFrame:frame):df_editor_objectinfo
@@ -457,7 +448,7 @@ detailsFramework.EditorMixin = {
                 end
             end,
 
-            Setup = function(self, object, registeredObject, anchorSettings, onTickWhileMoving, onTickNotMoving)
+            Setup = function(self, object, registeredObject, onTickWhileMoving, onTickNotMoving)
                 for i = 1, 4 do
                     local moverFrame = self[i]
                     moverFrame:Show()
@@ -474,8 +465,6 @@ detailsFramework.EditorMixin = {
 
                         editorFrame.currentObjectNinePoints = detailsFramework.Math.GetNinePoints(registeredObject.refFrame)
 
-                        self.currentMoverDown = moverFrame
-
                         --start moving
                         moverFrame:SetScript("OnUpdate", onTickWhileMoving)
                         moverFrame.bIsMoving = true
@@ -486,40 +475,11 @@ detailsFramework.EditorMixin = {
                         self:Stop()
                         moverFrame:EnableMouse(true)
 
-                        local posX, posY = moverFrame:GetCenter()
-                        local closestPoint, offsetX, offsetY, pointX, pointY = editorFrame.currentObjectNinePoints:GetClosestPoint(CreateVector2D(posX, posY))
-                        local newInsideClosestPoint = detailsFramework:ConvertAnchorPointToInside(closestPoint)
-
-                        if (newInsideClosestPoint ~= anchorSettings.side) then
-                            detailsFramework:ConvertAnchorOffsets(moverFrame, registeredObject.refFrame, anchorSettings, newInsideClosestPoint)
-                            detailsFramework:SetAnchor(object, anchorSettings, object:GetParent())
-
-                            print("moved")
-
-                            --[=
-                            --save the new position
-                            local profileTable, profileMap = editorFrame:GetEditingProfile()
-                            local profileKey = profileMap.anchor
-                            local parentTable = getParentTable(profileTable, profileKey)
-                            parentTable.x = anchorSettings.x
-                            parentTable.y = anchorSettings.y
-                            parentTable.side = newInsideClosestPoint
-
-                            if (editorFrame:GetOnEditCallback()) then
-                                editorFrame:GetOnEditCallback()(object, "x", anchorSettings.x, profileTable, profileKey)
-                                editorFrame:GetOnEditCallback()(object, "y", anchorSettings.x, profileTable, profileKey)
-                                editorFrame:GetOnEditCallback()(object, "side", anchorSettings.side, profileTable, profileKey)
-                            end
-                            --]=]
-                        end
-
                         --save the current position of the object selected
                         local x, y = object:GetCenter()
                         moverFrame.MovingInfo.restingX = x
                         moverFrame.MovingInfo.restingY = y
                         moverFrame:SetScript("OnUpdate", onTickNotMoving)
-
-                        self.currentMoverDown = nil
                     end)
 
                     if (i == 1) then
@@ -847,16 +807,14 @@ detailsFramework.EditorMixin = {
             local yOffset = startY - moverFrame.MovingInfo.startY
 
             if (xOffset ~= 0 or yOffset ~= 0) then
-                --update the mover position
                 moverFrame.MovingInfo.startX = startX
                 moverFrame.MovingInfo.startY = startY
-
-                --update the anchor offset
                 anchorSettings.x = anchorSettings.x + xOffset
                 anchorSettings.y = anchorSettings.y + yOffset
-
-                --set the anchor making the object move to the new location
                 detailsFramework:SetAnchor(object, anchorSettings, objectParent)
+
+                local closestPoint = self.currentObjectNinePoints:GetClosestPoint(CreateVector2D(startX, startY))
+                print("closestPoint", closestPoint)
 
                 --update the slider offset in the options frame
                 local anchorXSlider = optionsFrame:GetWidgetById("anchoroffsetx")
@@ -876,7 +834,7 @@ detailsFramework.EditorMixin = {
                     self:GetOnEditCallback()(object, "y", anchorSettings.x, profileTable, profileKey)
                 end
 
-                moverFrames:UpdatePosition(moverFrame) --move the other 3 movers
+                moverFrames:UpdatePosition(moverFrame)
             end
         end
 
@@ -893,7 +851,7 @@ detailsFramework.EditorMixin = {
             end
         end
 
-        moverFrames:Setup(object, registeredObject, anchorSettings, onTickWhileMoving, onTickNotMoving)
+        moverFrames:Setup(object, registeredObject, onTickWhileMoving, onTickNotMoving)
     end,
 
     ---@param self df_editor
