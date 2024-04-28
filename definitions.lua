@@ -137,8 +137,10 @@
 ---@field Math df_math
 ---@field FontOutlineFlags table<outline, boolean>
 ---@field table df_table_functions
----@field AnchorPoints string[]
+---@field AnchorPoints string[] localized point names
+---@field AnchorPointsByIndex string[] api point names
 ---@field AnchorPointsToInside table<anchorid, anchorid>
+---@field InsidePointsToAnchor table<anchorid, anchorid>
 ---@field alias_text_colors table<string, number[]>
 ---@field ClassFileNameToIndex table<string, number> engClass -> classIndex
 ---@field ClientLanguage string

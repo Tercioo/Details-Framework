@@ -415,24 +415,148 @@ detailsFramework.EditorMixin = {
         end
     end,
 
+    --screen position offset is the XY screen position offset from the bottom left of the screen, they are always positive, they go from 0 to screen width or height
+    CreateAnchorFrames = function(editorFrame)
+        --table containing 9 buttons, each one in a different position of the object, indexes one to nine in this order: topleft, left, bottomleft, bottom, bottomright, right, topright, top, center
+        editorFrame.AnchorFrames = {
+            anchorFrames = {},
+
+            DisableAllAnchors = function(self)
+                for i = 1, 9 do
+                    local anchorFrame = self:GetAnchorFrame(i)
+                    self:SetNotInUse(anchorFrame)
+                    anchorFrame:Hide()
+                end
+            end,
+
+            SetupAnchorsForObject = function(self, object, anchorTable)
+                editorFrame.AnchorFrames:DisableAllAnchors()
+
+                local registeredObject = editorFrame:GetEditingRegisteredObject()
+
+                if (registeredObject.refFrame) then
+                    for i = 1, 9 do
+                        local anchorFrame = self.anchorFrames[i]
+                        local anchorName = detailsFramework.AnchorPointsByIndex[i]
+                        anchorFrame:ClearAllPoints()
+                        anchorFrame:SetPoint(anchorName, registeredObject.refFrame, anchorName, 0, 0)
+                        anchorFrame:Show()
+                    end
+
+                    local sideSelected = anchorTable.side
+                    local anchorFrameSelected = self:GetAnchorFrame(detailsFramework.InsidePointsToAnchor[sideSelected] or sideSelected)
+                    self:SetInUse(anchorFrameSelected)
+
+                    self.anchorTable = anchorTable
+                end
+            end,
+
+            --when the user click on one of the anchor points, change the anchor side setting and recalculate the xy offset of the new point related to the same point in the object
+            SelectAnchorPoint = function(anchorFrame)
+                editorFrame.AnchorFrames:SetNotInUseForAllAnchors()
+
+                --change the color of the anchor point to show it's selected
+                anchorFrame.Texture:SetColorTexture(1, 0, 0, 0.5)
+
+                --get the object being edited in the editor
+                local object = editorFrame:GetEditingObject()
+
+                --get the xy of the nine points of the object
+                local ninePoints = detailsFramework.Math.GetNinePoints(object)
+
+                --get the coordinates of the anchorIndex within the ninePoints table
+                --the xy point in here is the XY screen position offset from the bottom left of the screen
+                local screenPoint = ninePoints[anchorFrame.anchorIndex]
+                local objectScreenPosX = screenPoint.x
+                local objectScreenPosY = screenPoint.y
+
+                --get the screen position offset of the anchor
+                local anchorScreenPosX, anchorScreenPosY = anchorFrame:GetCenter()
+
+                --calculate the xy offset of the anchor point related to the object
+                local offsetX = objectScreenPosX - anchorScreenPosX
+                local offsetY = objectScreenPosY - anchorScreenPosY
+
+                --get the anchor settings table
+                local anchorTable = editorFrame.AnchorFrames.anchorTable
+
+                --set the anchor settings
+                anchorTable.x = offsetX
+                anchorTable.y = offsetY
+                anchorTable.side = detailsFramework.AnchorPointsToInside[anchorFrame.anchorIndex]
+
+                C_Timer.After(0, function()
+                    editorFrame:PrepareObjectForEditing()
+                end)
+            end,
+
+            GetAnchorFrame = function(self, anchorIndex)
+                return self.anchorFrames[anchorIndex]
+            end,
+
+            SetNotInUseForAllAnchors = function(self)
+                for i = 1, 9 do
+                    local anchorFrame = self:GetAnchorFrame(i)
+                    self:SetNotInUse(anchorFrame)
+                end
+            end,
+
+            SetNotInUse = function(self, anchorFrame)
+                anchorFrame.Texture:SetColorTexture(1, 1, 1, 0.5)
+            end,
+
+            SetInUse = function(self, anchorFrame)
+                anchorFrame.Texture:SetColorTexture(1, 0, 0, 0.5)
+            end,
+
+            CreateNineAnchors = function(self)
+                local overTheTopFrame = editorFrame:GetOverTheTopFrame()
+
+                for i = 1, 9 do
+                    local anchorFrame = CreateFrame("button", "$parentAnchorFrame" .. i, overTheTopFrame, "BackdropTemplate")
+                    anchorFrame:SetSize(8, 8)
+                    anchorFrame:SetBackdrop({bgFile = [[Interface\Tooltips\UI-Tooltip-Background]], tileSize = 64, tile = true})
+                    anchorFrame:SetBackdropColor(1, 0, 0, 0.5)
+                    anchorFrame:SetFrameStrata("TOOLTIP")
+                    anchorFrame:SetFrameLevel(10)
+                    anchorFrame.anchorIndex = i
+                    anchorFrame:Hide()
+
+                    anchorFrame:SetScript("OnClick", editorFrame.AnchorFrames.SelectAnchorPoint)
+
+                    self.anchorFrames[i] = anchorFrame
+
+                    anchorFrame.Texture = anchorFrame:CreateTexture("$parentTexture", "border")
+                    anchorFrame.Texture:SetColorTexture(1, 1, 1, 0.5)
+                    anchorFrame.Texture:SetAllPoints(anchorFrame)
+                end
+            end,
+        }
+
+        editorFrame.AnchorFrames:CreateNineAnchors()
+        return editorFrame.AnchorFrames
+    end,
+
     ---create a frame to move the object, the frame is attached into the bottom right of the selected object
     ---@param editorFrame df_editor
     ---@return df_editor_movermain
     CreateMoverFrames = function(editorFrame)
+        local amountOfMovers = 1
+
         --frame that is used to move the object
         ---@type df_editor_movermain
         local movers = {
             anchorNames = {"bottomright", "bottomleft", "topright", "topleft"},
 
             Hide = function(self)
-                for i = 1, 4 do
+                for i = 1, amountOfMovers do
                     self[i]:Hide()
                 end
             end,
 
             Stop = function(self)
                 self.bIsMoving = false
-                for i = 1, 4 do
+                for i = 1, amountOfMovers do
                     local moverFrame = self[i]
                     moverFrame:StopMovingOrSizing()
                     moverFrame:SetScript("OnUpdate", nil)
@@ -440,7 +564,7 @@ detailsFramework.EditorMixin = {
             end,
 
             UpdatePosition = function(self, moverFrame)
-                for i = 1, 4 do
+                for i = 1, amountOfMovers do
                     local thisMoverFrame = self[i]
                     if (thisMoverFrame ~= moverFrame) then
                         thisMoverFrame.OnTickNotMoving(thisMoverFrame, 0)
@@ -449,7 +573,7 @@ detailsFramework.EditorMixin = {
             end,
 
             Setup = function(self, object, registeredObject, onTickWhileMoving, onTickNotMoving)
-                for i = 1, 4 do
+                for i = 1, amountOfMovers do
                     local moverFrame = self[i]
                     moverFrame:Show()
                     moverFrame:EnableMouse(true)
@@ -480,16 +604,31 @@ detailsFramework.EditorMixin = {
                         moverFrame.MovingInfo.restingX = x
                         moverFrame.MovingInfo.restingY = y
                         moverFrame:SetScript("OnUpdate", onTickNotMoving)
+
+                        local currentNinePoints = editorFrame.currentObjectNinePoints
+                        local startX, startY = moverFrame:GetCenter()
+                        local closestPoint = editorFrame.currentObjectNinePoints:GetClosestPoint(CreateVector2D(startX, startY))
+                        --if (closestPoint ~= parentTable.side) then
+                            --print("side is different", closestPoint, parentTable.side)
+                        --end
                     end)
 
+                    moverFrame:ClearAllPoints()
+
                     if (i == 1) then
-                        moverFrame:SetPoint("center", object, "bottomright", 0, 0)
+                        if (amountOfMovers == 1) then
+                            moverFrame:SetPoint("topleft", object, "topleft", 0, 0)
+                            moverFrame:SetPoint("bottomright", object, "bottomright", 0, 0)
+                        else
+                            moverFrame:SetPoint("center", object, "bottomright", 0, 0)
+                        end
                     elseif (i == 2) then
                         moverFrame:SetPoint("center", object, "bottomleft", 0, 0)
                     elseif (i == 3) then
                         moverFrame:SetPoint("center", object, "topright", 0, 0)
                     elseif (i == 4) then
                         moverFrame:SetPoint("center", object, "topleft", 0, 0)
+                        moverFrame:SetSize(object:GetWidth(), object:GetHeight())
                     end
 
                     local x, y = moverFrame:GetCenter()
@@ -507,7 +646,7 @@ detailsFramework.EditorMixin = {
             end,
         }
 
-        for i = 1, 4 do
+        for i = 1, amountOfMovers do
             ---@type df_editor_mover
             local moverFrame = CreateFrame("button", "$parentMover" .. i, UIParent, "BackdropTemplate")
             moverFrame:SetFrameStrata("TOOLTIP")
@@ -515,6 +654,7 @@ detailsFramework.EditorMixin = {
             moverFrame:SetClampedToScreen(true)
             moverFrame:EnableMouse(true)
             moverFrame:SetMovable(true)
+            moverFrame:SetFrameLevel(math.abs(i-5))
             moverFrame.MovingInfo = {
                 startX = 0,
                 startY = 0,
@@ -525,8 +665,8 @@ detailsFramework.EditorMixin = {
             movers[i] = moverFrame
 
             moverFrame.MoverIcon = moverFrame:CreateTexture("$parentMoverIcon", "overlay")
-            moverFrame.MoverIcon:SetTexture([[Interface\AddOns\Plater_UnitFrames\assets\textures\icons\mover.png]])
-            moverFrame.MoverIcon:SetSize(8, 8)
+            moverFrame.MoverIcon:SetTexture([[Interface\CHATFRAME\CHATFRAMEBACKGROUND]])
+            moverFrame.MoverIcon:SetSize(6, 6)
             moverFrame.MoverIcon:SetPoint("center", moverFrame, "center", 0, 0)
         end
 
@@ -592,6 +732,8 @@ detailsFramework.EditorMixin = {
         local object = self:GetEditingObject()
         local profileTable, profileMap = self:GetEditingProfile()
         profileMap = profileMap or {}
+
+        self.AnchorFrames:DisableAllAnchors()
 
         local conditionalKeys = profileMap.enable_if or {}
 
@@ -749,6 +891,10 @@ detailsFramework.EditorMixin = {
             end
         end
 
+        if (anchorSettings) then
+            self.AnchorFrames:SetupAnchorsForObject(object, anchorSettings)
+        end
+
         --at this point, the optionsTable is ready to be used on DF:BuildMenuVolatile()
         menuOptions.align_as_pairs = true
         menuOptions.align_as_pairs_length = 150
@@ -813,9 +959,6 @@ detailsFramework.EditorMixin = {
                 anchorSettings.y = anchorSettings.y + yOffset
                 detailsFramework:SetAnchor(object, anchorSettings, objectParent)
 
-                local closestPoint = self.currentObjectNinePoints:GetClosestPoint(CreateVector2D(startX, startY))
-                print("closestPoint", closestPoint)
-
                 --update the slider offset in the options frame
                 local anchorXSlider = optionsFrame:GetWidgetById("anchoroffsetx")
                 anchorXSlider:SetValueNoCallback(anchorSettings.x)
@@ -829,9 +972,14 @@ detailsFramework.EditorMixin = {
                 parentTable.x = anchorSettings.x
                 parentTable.y = anchorSettings.y
 
+                local closestPoint = self.currentObjectNinePoints:GetClosestPoint(CreateVector2D(startX, startY))
+                if (closestPoint ~= parentTable.side) then
+                    --print("side is different", closestPoint, parentTable.side)
+                end
+
                 if (self:GetOnEditCallback()) then
                     self:GetOnEditCallback()(object, "x", anchorSettings.x, profileTable, profileKey)
-                    self:GetOnEditCallback()(object, "y", anchorSettings.x, profileTable, profileKey)
+                    self:GetOnEditCallback()(object, "y", anchorSettings.y, profileTable, profileKey)
                 end
 
                 moverFrames:UpdatePosition(moverFrame)
@@ -1190,6 +1338,8 @@ function detailsFramework:CreateEditor(parent, name, options)
     local OTTFrame = CreateFrame("frame", "$parentOTTFrame", UIParent)
     OTTFrame:SetFrameStrata("TOOLTIP")
     editorFrame.overTheTopFrame = OTTFrame
+
+    editorFrame:CreateAnchorFrames()
 
     editorFrame.moverFrames = editorFrame:CreateMoverFrames()
     editorFrame:CreateMoverGuideLines()

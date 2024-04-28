@@ -2059,6 +2059,18 @@ DF.AnchorPoints = {
 	"Inside Top Right", --17
 }
 
+DF.AnchorPointsByIndex = {
+	"topleft", --1
+	"left", --2
+	"bottomleft", --3
+	"bottom", --4
+	"bottomright", --5
+	"right", --6
+	"topright", --7
+	"top", --8
+	"center", --9
+}
+
 DF.AnchorPointsToInside = {
 	[9] = 9,
 	[8] = 12,
@@ -2069,6 +2081,18 @@ DF.AnchorPointsToInside = {
 	[3] = 15,
 	[2] = 10,
 	[1] = 14,
+}
+
+DF.InsidePointsToAnchor = {
+	[9] = 9,
+	[12] = 8,
+	[17] = 7,
+	[11] = 6,
+	[16] = 5,
+	[13] = 4,
+	[15] = 3,
+	[10] = 2,
+	[14] = 1,
 }
 
 function DF:ConvertAnchorPointToInside(anchorPoint)
@@ -2108,7 +2132,7 @@ function DF:ConvertAnchorOffsets(widget, referenceWidget, anchorTable, newAnchor
 	if (newAnchorSide == 14) then --inside topleft
 		anchorTable.x = ninePoints[1].x - refNinePoints[1].x
 		anchorTable.y = ninePoints[1].y - refNinePoints[1].y
-		print("inside topleft", anchorTable.x, anchorTable.y)
+		--print("inside topleft", anchorTable.x, anchorTable.y)
 
 	elseif (newAnchorSide == 15) then --inside bottomleft
 		anchorTable.x = ninePoints[3].x - refNinePoints[3].x
@@ -2137,7 +2161,7 @@ function DF:ConvertAnchorOffsets(widget, referenceWidget, anchorTable, newAnchor
 	elseif (newAnchorSide == 9) then --center
 		calcPointCoords(ninePoints, refNinePoints, anchorTable, 9, newAnchorSide)
 	else
-		print("not implemented")
+		--print("not implemented")
 	end
 end
 
