@@ -1,6 +1,6 @@
 
 
-local dversion = 544
+local dversion = 545
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary(major, minor)
 
