@@ -9,6 +9,53 @@ local type = type
 local floor = math.floor
 local GetTime = GetTime
 
+---@class df_timebar : statusbar, df_scripthookmixin, df_widgets
+---@field type string
+---@field dframework boolean
+---@field statusBar df_timebar_statusbar
+---@field widget statusbar
+---@field direction string
+---@field HookList table
+---@field tooltip string
+---@field locked boolean
+---@field HasTimer fun(self:df_timebar):boolean return if the timer bar is active showing a timer
+---@field SetTimer fun(self:df_timebar, currentTime:number, startTime:number|boolean|nil, endTime:number|nil)
+---@field StartTimer fun(self:df_timebar, currentTime:number, startTime:number, endTime:number)
+---@field StopTimer fun(self:df_timebar)
+---@field ShowSpark fun(self:df_timebar, state:boolean, alpha:number|nil, color:string|nil)
+---@field SetIcon fun(self:df_timebar, texture:string, L:number|nil, R:number|nil, T:number|nil, B:number|nil)
+---@field SetIconSize fun(self:df_timebar, width:number, height:number)
+---@field SetTexture fun(self:df_timebar, texture:texturepath|textureid)
+---@field SetColor fun(self:df_timebar, color:any, green:number|nil, blue:number|nil, alpha:number|nil)
+---@field SetLeftText fun(self:df_timebar, text:string)
+---@field SetRightText fun(self:df_timebar, text:string)
+---@field SetFont fun(self:df_timebar, font:string|nil, size:number|nil, color:any, shadow:boolean|nil)
+---@field SetThrottle fun(self:df_timebar, seconds:number)
+---@field SetDirection fun(self:df_timebar, direction:string)
+
+---@class df_timebar_statusbar : statusbar
+---@field MyObject df_timebar
+---@field hasTimer boolean
+---@field startTime number
+---@field endTime number
+---@field timeLeft1 number
+---@field timeLeft2 number
+---@field throttle number
+---@field isUsingThrottle boolean
+---@field amountThrottle number
+---@field sparkAlpha number
+---@field sparkColorR number
+---@field sparkColorG number
+---@field sparkColorB number
+---@field dontShowSpark boolean
+---@field direction string
+---@field spark texture
+---@field icon texture
+---@field leftText fontstring
+---@field rightText fontstring
+---@field backgroundTexture texture
+---@field barTexture texture
+
 local APITimeBarFunctions
 
 do
@@ -188,6 +235,9 @@ function TimeBarMetaFunctions:SetFont(font, size, color, shadow)
     end
 end
 
+---set a throttle for the timer bar, the timer will only update every X seconds
+---calling without parameters will disable the throttle
+---@param seconds number|nil the amount of seconds to throttle the timer
 function TimeBarMetaFunctions:SetThrottle(seconds)
     if (seconds and seconds > 0) then
         self.statusBar.isUsingThrottle = true
@@ -197,6 +247,8 @@ function TimeBarMetaFunctions:SetThrottle(seconds)
     end
 end
 
+---accept 'left' 'right' or nil, if ommited will default to right
+---@param direction "left"|"right"|nil the direction of the timer bar
 function TimeBarMetaFunctions:SetDirection(direction)
     direction = direction or "right"
     self.direction = direction
@@ -295,6 +347,7 @@ end
 
 ---start a timer on the timebar
 ---calling without parameters will stop the timer
+---@param self df_timebar
 ---@param currentTime number the time in seconds if startTime is a boolean true. GetTime() when start and end time are passed
 ---@param startTime number|boolean|nil GetTime() when the timer started. if passed true: startTime and endTime are GetTime() and GetTime() + currentTime, currenTime is the time in seconds
 ---@param endTime number|nil GetTime() when the timer will end. ignored if startTime is a boolean true
@@ -311,7 +364,7 @@ function TimeBarMetaFunctions:SetTimer(currentTime, startTime, endTime)
             --it is the same timer called again
             return
         end
-        self.statusBar.startTime = startTime
+        self.statusBar.startTime = tonumber(startTime) or 0 --fit the number type
         self.statusBar.endTime = endTime
     else
         local bForceNewTimer = type(startTime) == "boolean" and startTime
@@ -363,40 +416,22 @@ function TimeBarMetaFunctions:SetTimer(currentTime, startTime, endTime)
     end
 end
 
----@class df_timebar : statusbar
----@field statusBar statusbar
----@field widget statusbar
----@field direction string
----@field HookList table
----@field tooltip string
----@field locked boolean
----@field HasTimer fun(self:df_timebar):boolean return if the timer bar is active showing a timer
----@field SetTimer fun(self:df_timebar, currentTime:number, startTime:number|boolean|nil, endTime:number|nil)
----@field StartTimer fun(self:df_timebar, currentTime:number, startTime:number, endTime:number)
----@field StopTimer fun(self:df_timebar)
----@field ShowSpark fun(self:df_timebar, state:boolean, alpha:number|nil, color:string|nil)
----@field SetIcon fun(self:df_timebar, texture:string, L:number|nil, R:number|nil, T:number|nil, B:number|nil)
----@field SetIconSize fun(self:df_timebar, width:number, height:number)
----@field SetTexture fun(self:df_timebar, texture:texturepath|textureid)
----@field SetColor fun(self:df_timebar, color:any, green:number|nil, blue:number|nil, alpha:number|nil)
----@field SetLeftText fun(self:df_timebar, text:string)
----@field SetRightText fun(self:df_timebar, text:string)
-
 ---create a time bar widget, a timebar is a statubar that can have a timer and a spark
 ---@param parent frame the parent frame
 ---@param texture texturepath|textureid the texture of the bar
----@param width number the width of the bar
----@param height number the height of the bar
----@param value number the initial value of the bar
----@param member string the name of the member in the parent frame
----@param name string the name of the widget
+---@param width number? the width of the bar, default is 150
+---@param height number? the height of the bar, default is 20
+---@param value number? the initial value of the bar, default is 0
+---@param member string? the name of the member in the parent frame
+---@param name string? the name of the widget
+---@return df_timebar
 function DF:CreateTimeBar(parent, texture, width, height, value, member, name)
     if (not name) then
 		name = "DetailsFrameworkBarNumber" .. DF.BarNameCounter
 		DF.BarNameCounter = DF.BarNameCounter + 1
 
 	elseif (not parent) then
-		return error("Details! FrameWork: parent not found.", 2)
+		error("Details! FrameWork: parent not found.", 2)
 	end
 
 	if (name:find("$parent")) then
@@ -412,13 +447,16 @@ function DF:CreateTimeBar(parent, texture, width, height, value, member, name)
 	if (member) then
 		parent[member] = timeBar
 	end
+
+    ---@diagnostic disable-next-line: undefined-field
 	if (parent.dframework) then
+    ---@diagnostic disable-next-line: undefined-field
 		parent = parent.widget
 	end
 
 	value = value or 0
 	width = width or 150
-	height = height or 14
+	height = height or 20
 	timeBar.locked = false
 
     timeBar.statusBar = CreateFrame("statusbar", name, parent, "BackdropTemplate")
@@ -434,7 +472,9 @@ function DF:CreateTimeBar(parent, texture, width, height, value, member, name)
             if (not TimeBarMetaFunctions[funcName]) then
                 TimeBarMetaFunctions[funcName] = function(object, ...)
                     local x = loadstring("return _G['"..object.statusBar:GetName().."']:"..funcName.."(...)")
-                    return x(...)
+                    if (x) then
+                        return x(...)
+                    end
                 end
             end
         end
@@ -470,7 +510,7 @@ function DF:CreateTimeBar(parent, texture, width, height, value, member, name)
         timeBar.statusBar.rightText = timeBar.statusBar:CreateFontString(nil, "overlay", "GameFontNormal", 4)
         timeBar.statusBar.rightText:SetPoint("right", timeBar.statusBar, "right", -2, 0)
         timeBar.statusBar.rightText:SetJustifyH("left")
-        
+
 	--hooks
 		timeBar.HookList = {
 			OnEnter = {},
