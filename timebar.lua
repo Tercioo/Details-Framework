@@ -1,6 +1,7 @@
 
-local DF = _G["DetailsFramework"]
-if (not DF or not DetailsFrameworkCanLoad) then
+---@type detailsframework
+local detailsFramework = _G["DetailsFramework"]
+if (not detailsFramework or not DetailsFrameworkCanLoad) then
 	return
 end
 
@@ -23,6 +24,7 @@ local GetTime = GetTime
 ---@field StartTimer fun(self:df_timebar, currentTime:number, startTime:number, endTime:number)
 ---@field StopTimer fun(self:df_timebar)
 ---@field ShowSpark fun(self:df_timebar, state:boolean, alpha:number|nil, color:string|nil)
+---@field ShowTimer fun(self:df_timebar, bShowTimer:boolean)
 ---@field SetIcon fun(self:df_timebar, texture:string, L:number|nil, R:number|nil, T:number|nil, B:number|nil)
 ---@field SetIconSize fun(self:df_timebar, width:number, height:number)
 ---@field SetTexture fun(self:df_timebar, texture:texturepath|textureid)
@@ -42,6 +44,7 @@ local GetTime = GetTime
 ---@field timeLeft2 number
 ---@field throttle number
 ---@field isUsingThrottle boolean
+---@field showTimer boolean
 ---@field amountThrottle number
 ---@field sparkAlpha number
 ---@field sparkColorR number
@@ -61,15 +64,15 @@ local APITimeBarFunctions
 do
 	local metaPrototype = {
 		WidgetType = "timebar",
-		dversion = DF.dversion,
+		dversion = detailsFramework.dversion,
 	}
 
 	--check if there's a metaPrototype already existing
-	if (_G[DF.GlobalWidgetControlNames["timebar"]]) then
+	if (_G[detailsFramework.GlobalWidgetControlNames["timebar"]]) then
 		--get the already existing metaPrototype
-		local oldMetaPrototype = _G[DF.GlobalWidgetControlNames["timebar"]]
+		local oldMetaPrototype = _G[detailsFramework.GlobalWidgetControlNames["timebar"]]
 		--check if is older
-		if ( (not oldMetaPrototype.dversion) or (oldMetaPrototype.dversion < DF.dversion) ) then
+		if ( (not oldMetaPrototype.dversion) or (oldMetaPrototype.dversion < detailsFramework.dversion) ) then
 			--the version is older them the currently loading one
 			--copy the new values into the old metatable
 			for funcName, _ in pairs(metaPrototype) do
@@ -78,12 +81,12 @@ do
 		end
 	else
 		--first time loading the framework
-		_G[DF.GlobalWidgetControlNames["timebar"]] = metaPrototype
+		_G[detailsFramework.GlobalWidgetControlNames["timebar"]] = metaPrototype
 	end
 end
 
-local TimeBarMetaFunctions = _G[DF.GlobalWidgetControlNames["timebar"]]
-DF:Mixin(TimeBarMetaFunctions, DF.ScriptHookMixin)
+local TimeBarMetaFunctions = _G[detailsFramework.GlobalWidgetControlNames["timebar"]]
+detailsFramework:Mixin(TimeBarMetaFunctions, detailsFramework.ScriptHookMixin)
 
 --methods
 TimeBarMetaFunctions.SetMembers = TimeBarMetaFunctions.SetMembers or {}
@@ -206,7 +209,7 @@ function TimeBarMetaFunctions:SetTexture(texture)
 end
 
 function TimeBarMetaFunctions:SetColor(color, green, blue, alpha)
-    local r, g, b, a = DF:ParseColors(color, green, blue, alpha)
+    local r, g, b, a = detailsFramework:ParseColors(color, green, blue, alpha)
     self.statusBar.barTexture:SetVertexColor(r, g, b, a)
 end
 
@@ -219,19 +222,19 @@ end
 
 function TimeBarMetaFunctions:SetFont(font, size, color, shadow)
     if (font) then
-        DF:SetFontFace(self.statusBar.leftText, font)
+        detailsFramework:SetFontFace(self.statusBar.leftText, font)
     end
 
     if (size) then
-        DF:SetFontSize(self.statusBar.leftText, size)
+        detailsFramework:SetFontSize(self.statusBar.leftText, size)
     end
 
     if (color) then
-        DF:SetFontColor(self.statusBar.leftText, color)
+        detailsFramework:SetFontColor(self.statusBar.leftText, color)
     end
 
     if (shadow) then
-        DF:SetFontOutline(self.statusBar.leftText, shadow)
+        detailsFramework:SetFontOutline(self.statusBar.leftText, shadow)
     end
 end
 
@@ -277,6 +280,14 @@ function TimeBarMetaFunctions:StopTimer()
     statusBar.spark:Hide()
 end
 
+function TimeBarMetaFunctions:ShowTimer(bShowTimer)
+    if (bShowTimer) then
+        self.statusBar.showTimer = true
+    else
+        self.statusBar.showTimer = nil
+    end
+end
+
 function TimeBarMetaFunctions:ShowSpark(state, alpha, color)
     if (type(state) == "boolean" and state == false) then
         self.statusBar.dontShowSpark = true
@@ -291,7 +302,7 @@ function TimeBarMetaFunctions:ShowSpark(state, alpha, color)
     end
 
     if (color) then
-        local r, g, b = DF:ParseColors(color)
+        local r, g, b = detailsFramework:ParseColors(color)
         if (r and g and b) then
             self.statusBar.sparkColorR = r
             self.statusBar.sparkColorG = g
@@ -304,6 +315,8 @@ function TimeBarMetaFunctions:ShowSpark(state, alpha, color)
     end
 end
 
+---@param self df_timebar_statusbar
+---@param deltaTime number
 local OnUpdateFunc = function(self, deltaTime)
     if (self.isUsingThrottle) then
         self.throttle = self.throttle + deltaTime
@@ -335,9 +348,11 @@ local OnUpdateFunc = function(self, deltaTime)
         end
     end
 
-    local timeLeft = floor(endTime - timeNow)
-    local formatedTimeLeft = DF:IntegerToTimer(timeLeft)
-    self.rightText:SetText(formatedTimeLeft)
+    if (self.showTimer) then
+        local timeLeft = floor(endTime - timeNow)
+        local formatedTimeLeft = detailsFramework:IntegerToTimer(timeLeft)
+        self.rightText:SetText(formatedTimeLeft)
+    end
 
     --check if finished
     if (timeNow >= self.endTime) then
@@ -425,17 +440,17 @@ end
 ---@param member string? the name of the member in the parent frame
 ---@param name string? the name of the widget
 ---@return df_timebar
-function DF:CreateTimeBar(parent, texture, width, height, value, member, name)
+function detailsFramework:CreateTimeBar(parent, texture, width, height, value, member, name)
     if (not name) then
-		name = "DetailsFrameworkBarNumber" .. DF.BarNameCounter
-		DF.BarNameCounter = DF.BarNameCounter + 1
+		name = "DetailsFrameworkBarNumber" .. detailsFramework.BarNameCounter
+		detailsFramework.BarNameCounter = detailsFramework.BarNameCounter + 1
 
 	elseif (not parent) then
 		error("Details! FrameWork: parent not found.", 2)
 	end
 
 	if (name:find("$parent")) then
-		local parentName = DF:GetParentName(parent)
+		local parentName = detailsFramework:GetParentName(parent)
 		name = name:gsub("$parent", parentName)
 	end
 
@@ -461,7 +476,7 @@ function DF:CreateTimeBar(parent, texture, width, height, value, member, name)
 
     timeBar.statusBar = CreateFrame("statusbar", name, parent, "BackdropTemplate")
     timeBar.widget = timeBar.statusBar
-    DF:Mixin(timeBar.statusBar, DF.WidgetFunctions)
+    detailsFramework:Mixin(timeBar.statusBar, detailsFramework.WidgetFunctions)
     timeBar.statusBar.MyObject = timeBar
     timeBar.direction = "right"
 
