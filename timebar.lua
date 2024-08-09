@@ -293,6 +293,11 @@ local OnUpdateFunc = function(self, deltaTime)
     end
 end
 
+---start a timer on the timebar
+---calling without parameters will stop the timer
+---@param currentTime number the time in seconds if startTime is a boolean true. GetTime() when start and end time are passed
+---@param startTime number|boolean|nil GetTime() when the timer started. if passed true: startTime and endTime are GetTime() and GetTime() + currentTime, currenTime is the time in seconds
+---@param endTime number|nil GetTime() when the timer will end. ignored if startTime is a boolean true
 function TimeBarMetaFunctions:SetTimer(currentTime, startTime, endTime)
     self.statusBar:Show()
 
@@ -358,7 +363,33 @@ function TimeBarMetaFunctions:SetTimer(currentTime, startTime, endTime)
     end
 end
 
+---@class df_timebar : statusbar
+---@field statusBar statusbar
+---@field widget statusbar
+---@field direction string
+---@field HookList table
+---@field tooltip string
+---@field locked boolean
+---@field HasTimer fun(self:df_timebar):boolean return if the timer bar is active showing a timer
+---@field SetTimer fun(self:df_timebar, currentTime:number, startTime:number|boolean|nil, endTime:number|nil)
+---@field StartTimer fun(self:df_timebar, currentTime:number, startTime:number, endTime:number)
+---@field StopTimer fun(self:df_timebar)
+---@field ShowSpark fun(self:df_timebar, state:boolean, alpha:number|nil, color:string|nil)
+---@field SetIcon fun(self:df_timebar, texture:string, L:number|nil, R:number|nil, T:number|nil, B:number|nil)
+---@field SetIconSize fun(self:df_timebar, width:number, height:number)
+---@field SetTexture fun(self:df_timebar, texture:texturepath|textureid)
+---@field SetColor fun(self:df_timebar, color:any, green:number|nil, blue:number|nil, alpha:number|nil)
+---@field SetLeftText fun(self:df_timebar, text:string)
+---@field SetRightText fun(self:df_timebar, text:string)
 
+---create a time bar widget, a timebar is a statubar that can have a timer and a spark
+---@param parent frame the parent frame
+---@param texture texturepath|textureid the texture of the bar
+---@param width number the width of the bar
+---@param height number the height of the bar
+---@param value number the initial value of the bar
+---@param member string the name of the member in the parent frame
+---@param name string the name of the widget
 function DF:CreateTimeBar(parent, texture, width, height, value, member, name)
     if (not name) then
 		name = "DetailsFrameworkBarNumber" .. DF.BarNameCounter
