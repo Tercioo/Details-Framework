@@ -22,8 +22,11 @@ function detailsFramework.table.pack(table)
     return newString
 end
 
----unpack a string and an array of data into a indexed table, sarting from the startIndex also returns the next index to start reading
+---unpack a string and an array of data into a indexed table, starting from the startIndex also returns the next index to start reading
 ---expected data: "3,1,2,3,4,5,6,7,8" or {3,1,2,3,4,5,6,7,8}, with the example the returned table is: {1, 2, 3} and the next index to read is 5
+---@param data string|table
+---@param startIndex number?
+---@return table, number
 function detailsFramework.table.unpack(data, startIndex)
     local splittedTable
 
@@ -37,15 +40,13 @@ function detailsFramework.table.unpack(data, startIndex)
     end
 
     local currentIndex = startIndex or 1
-
     local currentTableSize = tonumber(splittedTable[currentIndex])
     if (not currentTableSize) then
         error("Details! Framework: table.unpack: invalid table size.")
     end
 
     startIndex = (startIndex and startIndex + 1) or 2
-    local endIndex = currentTableSize + 1
-
+    local endIndex = currentIndex + currentTableSize
     local result = {}
 
     for i = startIndex, endIndex do
@@ -58,7 +59,47 @@ function detailsFramework.table.unpack(data, startIndex)
         end
     end
 
+    local nextIndex = endIndex + 1
+    if (not splittedTable[nextIndex]) then
+        return result, 0
+    end
+
     return result, endIndex + 1 --return the position of the last index plus 1 to account for the table size index
+end
+
+
+function detailsFramework.table.unpacksub(data, startIndex)
+    startIndex = startIndex or 1
+
+    local splittedTable = {}
+    local bIsRunning = true
+    local result = {}
+
+    for value in data:gmatch("[^,]+") do
+        splittedTable[#splittedTable+1] = value
+    end
+
+    local maxLoops = 4
+    local currentLoop = 1
+    while (bIsRunning) do
+        local unpackTable, nextIndex = detailsFramework.table.unpack(splittedTable, startIndex)
+        table.insert(result, unpackTable)
+
+        if (nextIndex == 0) then
+            bIsRunning = false
+            break
+        else
+            startIndex = nextIndex
+        end
+
+        currentLoop = currentLoop + 1
+        if (currentLoop == maxLoops) then
+            bIsRunning = false
+            break
+        end
+    end
+
+    return result
 end
 
 
