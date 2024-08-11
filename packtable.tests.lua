@@ -10,6 +10,24 @@ function PackTest()
     print("Result:     " .. type(packed) .. "  \"" .. packed .. "\"")
 end
 
+function PackSubTest()
+    local table = { {1, 2, 3}, {4, 5, 6}, {7, 8, 9} }
+    local packed = DetailsFramework.table.packsub(table)
+    print("Testing table.packsub, table: { {1, 2, 3}, {4, 5, 6}, {7, 8, 9} }")
+    local expected = "\"3,1,2,3,3,4,5,6,3,7,8,9\""
+    print("Expected: string ", expected)
+    print("Result:     " .. type(packed) .. "  \"" .. packed .. "\"")
+end
+
+function PackSubMergeTest()
+    local table = { {1, 2, 3}, {4, 5, 6}, {7, 8, 9} }
+    local packed = DetailsFramework.table.packsubmerge(table)
+    print("Testing table.packsubmerge, table: { {1, 2, 3}, {4, 5, 6}, {7, 8, 9} }")
+    local expected = "\"9,1,2,3,4,5,6,7,8,9\""
+    print("Expected: string ", expected)
+    print("Result:     " .. type(packed) .. "  \"" .. packed .. "\"")
+end
+
 function UnpackTest()
     local packed = "5,1,2,3,4,5"
     local table, nextIndex = DetailsFramework.table.unpack(packed)
