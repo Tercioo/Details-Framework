@@ -1460,16 +1460,7 @@ detailsFramework.MultiChartFrameMixin = {
         end
 
         -- sort the averages by the biggest average placing the biggest average in the first position
-        table.sort(biggestAverage, function(a, b)
-            -- Check if 'average' in both tables 'a' and 'b' are not nil before comparing
-            if a.average and b.average then
-                return a.average > b.average
-            elseif a.average then
-                return true -- 'a' has an average, but 'b' does not
-            else
-                return false -- 'b' might have an average, but 'a' does not, or both are nil
-            end
-        end)
+        table.sort(biggestAverage, function(a, b) if not (a.average and b.average) then return a.average ~= nil end return a.average > b.average end)
 
         local minValue, multiChartMaxValue = multiChartFrame:GetMinMaxValues()
         local plotAreaWidth = multiChartFrame.plotFrame:GetWidth() --if there's no axis, the plotFrame has no width
