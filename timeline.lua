@@ -42,6 +42,8 @@ local PixelUtil = PixelUtil or DFPixelUtil
 ---@field text_tempate string "OPTIONS_FONT_TEMPLATE"
 ---@field on_enter fun(self:df_timeline_line) --line
 ---@field on_leave fun(self:df_timeline_line) --line
+---@field on_create_line fun(self:df_timeline_line) --line
+---@field on_refresh_line fun(self:df_timeline_line) --line
 ---@field block_on_enter fun(self:button)
 ---@field block_on_leave fun(self:button)
 ---@field block_on_click fun(self:button)
@@ -116,12 +118,12 @@ local timeline_options = {
 ---@field customName any
 ---@field isIconRow boolean?
 ---@field showRightIcon boolean?
----@field blockLengthColor any
----@field blockLengthHeight number?
----@field blockLengthYOffset number?
----@field auraLengthColor any --back compatibility
----@field auraHeight number? --back compatibility
----@field auraYOffset number? --back compatibility
+---@field blockLengthHeight number? --need to remove
+---@field blockLengthYOffset number? --need to remove
+---@field auraLengthColor any
+---@field auraLengthTexture any
+---@field auraHeight number?
+---@field auraYOffset number?
 
 ---@class df_timeline_linedata : table
 ---@field spellId number
@@ -129,6 +131,9 @@ local timeline_options = {
 ---@field coords number[]?
 ---@field text string?
 ---@field timeline df_timeline_block_data[]
+---@field lineHeight number?
+---@field disabled boolean?
+---@field type string|number? helper to identify the line, defined by user
 
 ---@class df_timeline_scrolldata : table
 ---@field length number
@@ -151,7 +156,7 @@ local timeline_options = {
 ---@field blockLength df_timeline_line_blocklength
 ---@field info df_timeline_line_blockinfo
 ---@field timeline df_timeline
----@field backgroundBorder frame
+---@field backgroundBorder border_frame
 
 ---@class df_timeline_line_blocklength : button
 ---@field isMoving boolean
@@ -228,6 +233,22 @@ detailsFramework.TimeLine_LineMixin = {
 		--lineData store members: .text .icon .timeline
 		---@type df_timeline_linedata
 		local lineData = data.lines[self.dataIndex]
+		self.lineData = lineData
+
+		local mouseEnabled = not lineData.disabled
+		self.lineHeader:EnableMouse(mouseEnabled)
+		self:EnableMouse(mouseEnabled)
+		self:SetMouseClickEnabled(mouseEnabled)
+		self:SetPropagateMouseClicks(true)
+		self.enabled = mouseEnabled
+
+		if (lineData.lineHeight) then
+			self:SetHeight(lineData.lineHeight)
+			self.lineHeader:SetHeight(lineData.lineHeight)
+		else
+			self:SetHeight(timeline.options.line_height)
+			self.lineHeader:SetHeight(timeline.options.line_height)
+		end
 
 		self.spellId = lineData.spellId
 
@@ -343,10 +364,18 @@ detailsFramework.TimeLine_LineMixin = {
 						thisAuraDuration = timeline.data.length - timeInSeconds
 					end
 
-					local blockLengthColor = blockInfo.blockLengthColor or blockInfo.auraLengthColor
-					if (blockLengthColor) then
-						local r, g, b = detailsFramework:ParseColors(blockLengthColor)
-						block.blockLength.Texture:SetVertexColor(r, g, b, 0.5)
+					local blockLengthTexture = blockInfo.auraLengthTexture
+					if (blockLengthTexture) then
+						block.blockLength.Texture:SetTexture(blockLengthTexture, true)
+						block.blockLength.Texture:SetHorizTile(true)
+					else
+						block.blockLength.Texture:SetColorTexture(1, 1, 1, 1)
+					end
+
+					local auraLengthColor = blockInfo.auraLengthColor
+					if (auraLengthColor) then
+						local r, g, b, a = detailsFramework:ParseColors(auraLengthColor)
+						block.blockLength.Texture:SetVertexColor(r, g, b, a or 0.5)
 					else
 						block.blockLength.Texture:SetVertexColor(1, 1, 1, 0.5)
 					end
@@ -526,13 +555,16 @@ detailsFramework.TimeLine_LineMixin = {
 ---@field originalHeight number
 ---@field effectiveWidth number
 
----@class df_timeline_line : frame, df_timeline_line_mixin
+---@class df_timeline_line : button, df_timeline_line_mixin
+---@field index number
 ---@field spellId number
 ---@field icon df_image
 ---@field text df_label
 ---@field dataIndex number
 ---@field backdrop_color table
 ---@field backdrop_color_highlight table
+---@field enabled boolean
+---@field lineData df_timeline_linedata
 
 ---@class df_timeline : scrollframe, df_timeline_mixin, df_optionsmixin, df_framelayout, df_lineindicator
 ---@field body df_timeline_body
@@ -568,7 +600,7 @@ detailsFramework.TimeLine_LineMixin = {
 ---@field GetBlockOrLengthUnderMouse fun(self:df_timeline):df_timeline_line_block?
 ---@field GetTimeUnderMouse fun(self:df_timeline):number
 ---@field GetBodyWidthUnderMouse fun(self:df_timeline):number
----@field RefreshTimeLine fun(self:df_timeline, bDoNotRefreshButtons:boolean?)
+---@field RefreshTimeLine fun(self:df_timeline, bDelayButtonRefresh:boolean?, bFromScale:boolean?)
 ---@field SetData fun(self:df_timeline, data:table)
 ---@field GetData fun(self:df_timeline):table
 ---@field RefreshResize fun(self:df_timeline)
@@ -670,30 +702,42 @@ detailsFramework.TimeLineMixin = {
 		if (not line) then
 			--create a new line
 			---@type df_timeline_line
-			line = CreateFrame("frame", "$parentLine" .. index, self.body, "BackdropTemplate")
+			line = CreateFrame("button", "$parentLine" .. index, self.body, "BackdropTemplate")
 			detailsFramework:Mixin(line, detailsFramework.TimeLine_LineMixin)
 			self.lines[index] = line
+
+			line.index = index
 
 			local yPosition
 			if (self.options.show_elapsed_timeline) then
 				yPosition = -((index-1) * (self.options.line_height + 1)) - 2 - self.options.elapsed_timeline_height
 			else
+				--need code cleanup as the 'else' stuff isn't in use anymore
 				yPosition = -((index-1) * (self.options.line_height + 1)) - 1
 			end
 
 			local yPadding = -10
 			yPosition = yPosition + yPadding
 
-			line:SetPoint("topleft", self.body, "topleft", 1, yPosition)
+			if (index == 1) then
+				line:SetPoint("topleft", self.body, "topleft", 1, yPosition)
+			else
+				line:SetPoint("topleft", self.lines[index-1], "bottomleft", 0, -1)
+			end
+
 			line:SetSize(1, self.options.line_height) --width is set when updating the frame
 
 			local detachedHeaderFrame = self.headerFrame
 			local lineHeader
 
 			if (detachedHeaderFrame) then
-				lineHeader = CreateFrame("frame", nil, self.headerBody, "BackdropTemplate")
+				lineHeader = CreateFrame("frame", "$parentHeader", self.headerBody, "BackdropTemplate")
 				lineHeader:SetSize(detachedHeaderFrame:GetWidth(), self.options.line_height)
-				lineHeader:SetPoint("topleft", self.headerBody, "topleft", 0, yPosition)
+				if (index == 1) then
+					lineHeader:SetPoint("topleft", self.headerBody, "topleft", 0, yPosition)
+				else
+					lineHeader:SetPoint("topleft", self.lines[index-1].lineHeader, "bottomleft", 0, -1)
+				end
 				detailsFramework:CreateHighlightTexture(lineHeader, "HighlightTexture")
 				lineHeader.HighlightTexture:SetDrawLayer("overlay", 1)
 				lineHeader.HighlightTexture:Hide()
@@ -705,7 +749,7 @@ detailsFramework.TimeLineMixin = {
 
 				lineHeader.Line = line
 			else
-				lineHeader = CreateFrame("frame", nil, line, "BackdropTemplate")
+				lineHeader = CreateFrame("frame", "$parentHeader", line, "BackdropTemplate")
 				lineHeader:SetPoint("topleft", line, "topleft", 0, 0)
 				lineHeader:SetPoint("bottomleft", line, "bottomleft", 0, 0)
 				line:SetScript("OnEnter", self.options.on_enter)
@@ -735,6 +779,10 @@ detailsFramework.TimeLineMixin = {
 
 			line.backdrop_color = self.options.backdrop_color or {.1, .1, .1, .3}
 			line.backdrop_color_highlight = self.options.backdrop_color_highlight or {.3, .3, .3, .5}
+
+			if (self.options.on_create_line) then
+				self.options.on_create_line(line)
+			end
 		end
 
 		return line
@@ -856,7 +904,7 @@ detailsFramework.TimeLineMixin = {
 	--set icons and texts
 	--skin the sliders
 
-	RefreshTimeLine = function(self, bDelayButtonRefresh) --~refresh
+	RefreshTimeLine = function(self, bDelayButtonRefresh, bFromScale) --~refresh
 		if (not self.data.lines) then
 			return
 		end
@@ -872,43 +920,13 @@ detailsFramework.TimeLineMixin = {
 
 		local timelineWidth = self:GetWidth()
 
-		--original code
-		--[=[
-			--how many pixels represent 1 second
-			local bodyWidth = totalLength * pixelPerSecond * currentScale
-			self.body:SetWidth(bodyWidth + self.options.header_width)
-			self.body.effectiveWidth = bodyWidth
-
-			--reduce the default canvas size from the body with and don't allow the max value be negative
-			local newMaxValue = max(bodyWidth - (self:GetWidth() - self.options.header_width), 0)
-
-			--adjust the scale slider range
-			local oldMin, oldMax = self.horizontalSlider:GetMinMaxValues()
-			self.horizontalSlider:SetMinMaxValues(0, newMaxValue)
-			self.horizontalSlider:SetValue(detailsFramework:MapRangeClamped(oldMin, oldMax, 0, newMaxValue, self.horizontalSlider:GetValue()))
-		]=]
-
 		--calculate the width that the body width should be
 		local bodyWidth = totalLength * pixelPerSecond * currentScale
-		--get the biggest value between the calculated body width and (timeline width minus header width) in case the desired body width is smaller than the timeline width
-		--local bodyFrameWidth = max(bodyWidth + effectiveHeaderWidth, timelineWidth - effectiveHeaderWidth)
-		--self.body:SetWidth(bodyFrameWidth)
 		self.body:SetWidth(bodyWidth + effectiveHeaderWidth)
-
-		--[=[
-		print("effectiveHeaderWidth", effectiveHeaderWidth)
-		if (bodyWidth + effectiveHeaderWidth > timelineWidth - effectiveHeaderWidth) then
-			print(1)
-		else
-			print(2) --this is fucking with the elapsed time bar | need to see further in the script that's happening
-		end
-		--]=]
 
 		--reduce the default timeline size from the body width and don't allow the max value be negative
 		local diff = bodyWidth - timelineWidth
 		local newMaxValue = max(diff + effectiveHeaderWidth, 0)
-
-		--print(desiredBodyWidth + effectiveHeaderWidth, timelineWidth - effectiveHeaderWidth) --1020, 750
 
 		self.body.effectiveWidth = bodyWidth
 
@@ -920,9 +938,12 @@ detailsFramework.TimeLineMixin = {
 		--adjust the scale slider range
 		--new max value is zero when all content is shown in the timeline (no scroll needed)
 		local oldMin, oldMax = self.horizontalSlider:GetMinMaxValues()
-		local timeUnderMouse = self:GetTimeUnderMouse()
-		local timeUnderMouseInPixels = (timeUnderMouse * pixelPerSecond * self.currentScale)
-		local newValue = timeUnderMouseInPixels
+		local newHorizontalSliderValue = self.horizontalSlider:GetValue()
+		if (bFromScale) then
+			local timeUnderMouse = self:GetTimeUnderMouse()
+			local timeUnderMouseInPixels = (timeUnderMouse * pixelPerSecond * self.currentScale)
+			newHorizontalSliderValue = timeUnderMouseInPixels
+		end
 
 		if (newMaxValue == 0) then
 			--no scroll is needed
@@ -931,7 +952,7 @@ detailsFramework.TimeLineMixin = {
 
 		elseif (oldMax ~= newMaxValue) then
 			self.horizontalSlider:SetMinMaxValues(0, newMaxValue)
-			self.horizontalSlider:SetValue(newValue)
+			self.horizontalSlider:SetValue(newHorizontalSliderValue) --it is setting for zoom even when if the refresh is not from zoom
 		end
 
 		self.oldMinWidth = 0
@@ -981,8 +1002,11 @@ detailsFramework.TimeLineMixin = {
 			line.dataIndex = i --this index is used inside the line update function to know which data to get
 			line.lineHeader:SetWidth(self.options.header_width)
 			line:SetBlocksFromData() --the function to update runs within the line object
-			--line:SetHeight(30)
 			line.lineHeader:Show()
+
+			if (self.options.on_refresh_line) then
+				self.options.on_refresh_line(line)
+			end
 		end
 
 		--refresh elapsed time frame
@@ -1163,7 +1187,8 @@ function detailsFramework:CreateTimeLineFrame(parent, name, timelineOptions, ela
 				frameCanvas.oldScale = frameCanvas.currentScale
 				frameCanvas.currentScale = stepValue
 				local bDelayButtonRefresh = true
-				frameCanvas:RefreshTimeLine(bDelayButtonRefresh)
+				local bFromScale = true
+				frameCanvas:RefreshTimeLine(bDelayButtonRefresh, bFromScale)
 			end
 		end)
 

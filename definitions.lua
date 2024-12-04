@@ -61,6 +61,9 @@
 ---@field Color any?
 ---@field Texture any
 
+GameCooltipFrame1 = {}
+GameCooltipFrame2 = {}
+
 ---df version of an atlasinfo from the game API, it include color and desaturation information
 ---a df atlas can be created using DetailsFramework:CreateAtlas() and then used with DetailsFramework:SetAtlas()
 ---@class df_atlasinfo : atlasinfo
@@ -274,6 +277,7 @@
 ---@field CreateTimeLineFrame fun(self:table, parent:frame, name:string, timelineOptions:df_timeline_options, elapsedtimeOptions:df_elapsedtime_options) : df_timeline, df_timeline_header?, df_timeline_header_body? create a timeline frame, header and headerBody is nil if the timelineOptions has no header_detached set to true
 ---@field CreateTitleBar fun(self:table, parent:frame, titleText:string) : df_titlebar
 ---@field CreateElapsedTimeFrame fun(self:table, parent:frame, name:string?, options:df_elapsedtime_options?) : df_elapsedtime
+---@field CreateIconRow fun(self:table, parent:frame, name:string?, options:table?) : df_iconrow
 ---@field ConvertAnchorPointToInside fun(self:table, anchorPoint:anchorid) : anchorid
 ---@field ExpansionHasAugEvoker fun():boolean
 ---@field LoadSpellCache fun(self:table, hashMap:table, indexTable:table, allSpellsSameName:table) : hashMap:table, indexTable:table, allSpellsSameName:table load all spells in the game and add them into the passed tables
