@@ -897,8 +897,13 @@ end
 		self:SetScript("OnEnable", onEnableFunc)
 	end
 
+	---@class df_blizzbutton : button
+	---@field text fontstring
+	---@field MyObject df_button
+
 	---@class df_button : button, df_scripthookmixin, df_widgets
-	---@field widget button
+	---@field widget df_blizzbutton
+	---@field button df_blizzbutton
 	---@field tooltip string
 	---@field shown boolean
 	---@field width number
