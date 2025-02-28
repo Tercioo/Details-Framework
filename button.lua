@@ -1009,9 +1009,7 @@ end
 		buttonObject.text_overlay = _G[name .. "_Text"]
 		buttonObject.disabled_overlay = _G[name .. "_TextureDisabled"]
 
-		-- "dungeons/textures/common/transparent.blp", an epmty texture as default.
-		-- emptystring seems to cause weird issues (GREEEEEEN!) under unknown circumstances
-		texture = texture ~= "" and texture or 982414
+		texture = texture or ""
 		
 		--check for atlas
 		local bSetTexture = false
@@ -1032,6 +1030,9 @@ end
 				local r, g, b, a = detailsFramework:ParseColors(texture)
 				self.icon:SetColorTexture(r, g, b, a)
 				bSetTexture = true
+
+			elseif (texture == "") then
+				bSetTexture = true -- setting textures with an empty string causes green rectangles
 			end
 		end
 
