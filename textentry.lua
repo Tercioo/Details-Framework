@@ -373,6 +373,9 @@ detailsFramework.TextEntryCounter = detailsFramework.TextEntryCounter or 1
 		else
 			textentry:SetText("")
 			textentry.MyObject.currenttext = ""
+			if (textentry.MyObject.callWithNoText) then
+				textentry.MyObject.func(textentry.MyObject.param1, textentry.MyObject.param2, "", textentry, byScript or textentry)
+			end
 		end
 
 		if (not object.NoClearFocusOnEnterPressed) then
