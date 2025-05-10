@@ -4095,8 +4095,8 @@ function DF:CreateGlowOverlay(parent, antsColor, glowColor)
 		frameName = string.sub(frameName, string.len(frameName)-49)
 	end
 
-	--local glowFrame = CreateFrame("frame", frameName, parent, "ActionBarButtonSpellActivationAlert")
-	local glowFrame = CreateFrame("frame", frameName, parent)
+	local glowFrame = CreateFrame("frame", frameName, parent, "ActionBarButtonSpellActivationAlert")
+	--local glowFrame = CreateFrame("frame", frameName, parent)
 	glowFrame:HookScript("OnShow", glow_overlay_onshow)
 	glowFrame:HookScript("OnHide", glow_overlay_onhide)
 
