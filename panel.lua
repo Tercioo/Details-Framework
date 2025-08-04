@@ -527,7 +527,7 @@ detailsFramework.LayoutFrame = {
 	end
 
 -- frame stratas
-	function PanelMetaFunctions:SetFrameStrata()
+	function PanelMetaFunctions:GetFrameStrata()
 		return self.widget:GetFrameStrata()
 	end
 	function PanelMetaFunctions:SetFrameStrata(strata)
