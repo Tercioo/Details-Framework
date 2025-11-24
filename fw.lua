@@ -396,7 +396,7 @@ end
 ---@param specId number?
 ---@return string
 function DF.UnitGroupRolesAssigned(unitId, bUseSupport, specId)
-    local role
+    local role = "NONE"
 
     if (specId == 1473 and bUseSupport) then
         return "SUPPORT"
