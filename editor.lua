@@ -812,7 +812,7 @@ detailsFramework.EditorMixin = {
                 menuOptions[#menuOptions+1] = {type = "blank"}
             else
                 --get the key to be used on profile table
-                local profileKey = profileMap[option.key]
+                local profileKey = profileMap[option.key] or option.key
                 if profileKey then
                     local value
 
