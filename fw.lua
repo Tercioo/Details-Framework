@@ -1,5 +1,5 @@
 
-local dversion = 641
+local dversion = 642
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary(major, minor)
 
@@ -2588,7 +2588,6 @@ local anchoringFunctions = {
 ---@param anchorTo uiobject?
 function DF:SetAnchor(widget, anchorTable, anchorTo)
 	anchorTo = anchorTo or widget:GetParent()
-	dumpt(anchorTable)
 	anchoringFunctions[anchorTable.side](widget, anchorTo, anchorTable.x, anchorTable.y)
 end
 

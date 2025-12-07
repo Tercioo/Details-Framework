@@ -358,6 +358,8 @@ local attributes = {
 ---@field UnregisterObject fun(self:df_editor, object:uiobject)
 ---@field OnHide fun(self:df_editor)
 ---@field OnShow fun(self:df_editor)
+---@field CreateSelectedTextures fun(self:df_editor)
+---@field ShowSelectedTextures fun(self:df_editor, object:uiobject)
 ---@field GetProfileTableFromObject fun(self:df_editor, object:df_editor_objectinfo):table
 ---@field UpdateGuideLinesAnchors fun(self:df_editor)
 ---@field UpdateProfileTableOnAllRegisteredObjects fun(self:df_editor, profileTable:table)
@@ -481,6 +483,57 @@ detailsFramework.EditorMixin = {
 
     GetObjectSelector = function(self)
         return self.objectSelector
+    end,
+
+    ---@param self df_editor
+    CreateSelectedTextures = function(self)
+        self.SelectedTextures = {}
+        local anchors = {"topleft", "topright", "bottomleft", "bottomright"}
+        for i = 1, #anchors do
+            local thisAnchor = anchors[i]
+            local texture = self:GetOverTheTopFrame():CreateTexture(nil, "overlay")
+            detailsFramework:SetTexture(texture, self.options.selection_texture)
+            texture:SetDrawLayer("overlay", 6)
+            texture:Hide()
+            self.SelectedTextures[i] = texture
+
+            if (thisAnchor == "topright") then
+                texture:SetTexCoord(1, 0, 0, 1)
+            elseif (thisAnchor == "bottomleft") then
+                texture:SetTexCoord(0, 1, 1, 0)
+            elseif (thisAnchor == "bottomright") then
+                texture:SetTexCoord(1, 0, 1, 0)
+            end
+        end
+    end,
+
+    ShowSelectedTextures = function(self, object)
+        local textures = self.SelectedTextures
+        local size = self.options.selection_size
+
+        --topleft
+        textures[1]:ClearAllPoints()
+        textures[1]:SetPoint("topleft", object, "topleft", -3, 3)
+        textures[1]:SetSize(size, size)
+        textures[1]:Show()
+
+        --topright
+        textures[2]:ClearAllPoints()
+        textures[2]:SetPoint("topright", object, "topright", 3, 3)
+        textures[2]:SetSize(size, size)
+        textures[2]:Show()
+
+        --bottomleft
+        textures[3]:ClearAllPoints()
+        textures[3]:SetPoint("bottomleft", object, "bottomleft", -3, -3)
+        textures[3]:SetSize(size, size)
+        textures[3]:Show()
+
+        --bottomright
+        textures[4]:ClearAllPoints()
+        textures[4]:SetPoint("bottomright", object, "bottomright", 3, -3)
+        textures[4]:SetSize(size, size)
+        textures[4]:Show()
     end,
 
     ---@param self df_editor
@@ -865,6 +918,10 @@ detailsFramework.EditorMixin = {
         end
 
         self:PrepareObjectForEditing()
+
+        if self.options.start_editing_callback then
+            xpcall(self.options.start_editing_callback, geterrorhandler(), self, registeredObject)
+        end
     end,
 
     PrepareObjectForEditing = function(self) --~edit
@@ -1074,6 +1131,8 @@ detailsFramework.EditorMixin = {
         if (editingOptions.can_move) then
             self:StartObjectMovement(anchorSettings)
         end
+
+        self:ShowSelectedTextures(object)
     end,
 
     ---@param self df_editor
@@ -1101,6 +1160,7 @@ detailsFramework.EditorMixin = {
             local yOffset = startY - moverFrame.MovingInfo.startY
 
             if (xOffset ~= 0 or yOffset ~= 0) then
+                assert(anchorSettings, "StartObjectMovement() anchorSettings is nil for object: " .. registeredObject.id)
                 moverFrame.MovingInfo.startX = startX
                 moverFrame.MovingInfo.startY = startY
                 anchorSettings.x = anchorSettings.x + xOffset
@@ -1473,6 +1533,9 @@ detailsFramework.EditorMixin = {
 ---@field object_list_line_height number
 ---@field text_template table
 ---@field no_anchor_points boolean
+---@field start_editing_callback fun(editorFrame: df_editor, registeredObject: df_editor_objectinfo)?
+---@field selection_texture string
+---@field selection_size number
 
 --editorFrame.options.text_template
 
@@ -1488,6 +1551,9 @@ local editorDefaultOptions = {
     object_list_line_height = 20,
     text_template = detailsFramework:GetTemplate("font", "OPTIONS_FONT_TEMPLATE"),
     no_anchor_points = false,
+    start_editing_callback = nil,
+    selection_texture = "GM_BehaviorMessage_CornerTopLeft_Frame",
+    selection_size = 8,
 }
 
 function detailsFramework:CreateEditor(parent, name, options)
@@ -1548,6 +1614,8 @@ function detailsFramework:CreateEditor(parent, name, options)
 
     editorFrame.moverFrames = editorFrame:CreateMoverFrames()
     editorFrame:CreateMoverGuideLines()
+
+    editorFrame:CreateSelectedTextures()
 
     editorFrame.optionsFrame = optionsFrame
     editorFrame.canvasScrollBox = canvasFrame
