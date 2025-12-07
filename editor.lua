@@ -897,6 +897,10 @@ detailsFramework.EditorMixin = {
         elseif (objectType == "Texture") then
             ---@cast object texture
             attributeList = attributes[objectType]
+
+        elseif (objectType == "Frame" or objectType == "Button" or objectType == "StatusBar") then
+            ---@cast object frame
+            attributeList = attributes["Frame"]
         end
 
         --if there's extra options, add the attributeList to a new table and right after the extra options
