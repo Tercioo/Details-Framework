@@ -382,6 +382,40 @@ local editObjectDefaultOptions = {
     text_template = detailsFramework:GetTemplate("font", "OPTIONS_FONT_TEMPLATE"),
 }
 
+---@class df_editor_defaultoptions : table
+---@field width number
+---@field height number
+---@field options_width number
+---@field create_object_list boolean
+---@field object_list_width number
+---@field object_list_height number
+---@field object_list_lines number
+---@field object_list_line_height number
+---@field text_template table
+---@field no_anchor_points boolean
+---@field start_editing_callback fun(editorFrame: df_editor, registeredObject: df_editor_objectinfo)?
+---@field selection_texture string
+---@field selection_size number
+
+--editorFrame.options.text_template
+
+---@type df_editor_defaultoptions
+local editorDefaultOptions = {
+    width = 400,
+    height = 548,
+    options_width = 340,
+    create_object_list = true,
+    object_list_width = 200,
+    object_list_height = 420,
+    object_list_lines = 20,
+    object_list_line_height = 20,
+    text_template = detailsFramework:GetTemplate("font", "OPTIONS_FONT_TEMPLATE"),
+    no_anchor_points = false,
+    start_editing_callback = nil,
+    selection_texture = "GM_BehaviorMessage_CornerTopLeft_Frame",
+    selection_size = 8,
+}
+
 
 local getParentTable = function(profileTable, profileKey)
     local parentPath
@@ -1522,39 +1556,6 @@ detailsFramework.EditorMixin = {
     end,
 }
 
----@class df_editor_defaultoptions : table
----@field width number
----@field height number
----@field options_width number
----@field create_object_list boolean
----@field object_list_width number
----@field object_list_height number
----@field object_list_lines number
----@field object_list_line_height number
----@field text_template table
----@field no_anchor_points boolean
----@field start_editing_callback fun(editorFrame: df_editor, registeredObject: df_editor_objectinfo)?
----@field selection_texture string
----@field selection_size number
-
---editorFrame.options.text_template
-
----@type df_editor_defaultoptions
-local editorDefaultOptions = {
-    width = 400,
-    height = 548,
-    options_width = 340,
-    create_object_list = true,
-    object_list_width = 200,
-    object_list_height = 420,
-    object_list_lines = 20,
-    object_list_line_height = 20,
-    text_template = detailsFramework:GetTemplate("font", "OPTIONS_FONT_TEMPLATE"),
-    no_anchor_points = false,
-    start_editing_callback = nil,
-    selection_texture = "GM_BehaviorMessage_CornerTopLeft_Frame",
-    selection_size = 8,
-}
 
 function detailsFramework:CreateEditor(parent, name, options)
     name = name or ("DetailsFrameworkEditor" .. math.random(100000, 10000000))
