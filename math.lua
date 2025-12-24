@@ -214,7 +214,7 @@ function DF.Math.MultiplyBy(value, ...)
 end
 
 function DF.Math.PositiveNonZero(value)
-	return max(value, SMALL_FLOAT)
+	return max(value, 0.001)
 end
 
 function DF.Math.MapRangeUnclamped(inputX, inputY, outputX, outputY, value)

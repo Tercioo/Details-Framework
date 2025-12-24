@@ -1,5 +1,5 @@
 
-local dversion = 645
+local dversion = 646
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary(major, minor)
 
@@ -262,7 +262,7 @@ end
 ---@return boolean
 function DF.IsNonRetailWowWithRetailAPI()
     local _, _, _, buildInfo = GetBuildInfo()
-    if (buildInfo < 60000 and buildInfo >= 30401) or (buildInfo < 20000 and buildInfo >= 11404) then
+    if (buildInfo < 60000 and buildInfo >= 20000) or (buildInfo < 20000 and buildInfo >= 11404) then
         return true
     end
 	return false
