@@ -15,6 +15,8 @@ local wipe = table.wipe
 local insert = table.insert
 local max = math.max
 
+local issecretvalue = issecretvalue or function() return false end
+
 local GetSpellInfo = GetSpellInfo or function(spellID) if not spellID then return nil end local si = C_Spell.GetSpellInfo(spellID) if si then return si.name, nil, si.iconID, si.castTime, si.minRange, si.maxRange, si.spellID, si.originalIconID end end
 local SPELLBOOK_BANK_PLAYER = Enum.SpellBookSpellBank and Enum.SpellBookSpellBank.Player or "player"
 local IsPassiveSpell = IsPassiveSpell or C_Spell.IsSpellPassive
