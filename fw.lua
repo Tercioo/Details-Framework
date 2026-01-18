@@ -1765,6 +1765,7 @@ DF.FontOutlineFlags = {
 }
 
 ---set the outline of a fontstring, outline is a black border around the text, can be "NONE", "MONOCHROME", "OUTLINE" or "THICKOUTLINE"
+---usage: DF:SetFontOutline(fontString, "OUTLINE")
 ---@param fontString table
 ---@param outline outline
 function DF:SetFontOutline(fontString, outline)
@@ -1797,6 +1798,7 @@ function DF:SetFontOutline(fontString, outline)
 end
 
 ---remove spaces from the start and end of the string
+---usage: DF:Trim("   Hello World   ") --> "Hello World"
 ---@param string string
 ---@return string
 function DF:Trim(string)
@@ -1808,6 +1810,7 @@ function DF:trim(string)
 end
 
 ---truncate removing at a maximum of 10 character from the string
+---usage: local fontString:SetText("Hello WorldState Timer Start At") -> DF:TruncateTextSafe(fontString, 100) -> "Hello WorldState Time" -> the result is still above the maxWidth after removing 10 characters, the loop stops
 ---@param fontString table
 ---@param maxWidth number
 function DF:TruncateTextSafe(fontString, maxWidth)
@@ -1832,6 +1835,7 @@ function DF:TruncateTextSafe(fontString, maxWidth)
 end
 
 ---truncate removing characters from the string until the maxWidth is reach
+---usage: local fontString:SetText("Hello WorldState Timer Start At") -> DF:TruncateText(fontString, 100) -> "Hello WorldStat" -> the result is exactly the maxWidth or below
 ---@param fontString table
 ---@param maxWidth number
 function DF:TruncateText(fontString, maxWidth)
@@ -1933,6 +1937,7 @@ function DF:CleanTruncateUTF8String(text)
 end
 
 ---truncate the amount of numbers used to show the fraction part of a number
+---usage: DF:TruncateNumber(3.14159265, 2) -> 3.14
 ---@param number number
 ---@param fractionDigits number
 ---@return number
@@ -1952,6 +1957,10 @@ function DF:TruncateNumber(number, fractionDigits)
 	return truncatedNumber
 end
 
+---return the x and y position of the mouse (cursor) position scaled by the UIParent scale
+---@param self table
+---@return number xScaled
+---@return number yScaled
 function DF:GetCursorPosition()
 	local x, y = GetCursorPosition()
 	local scale = UIParent:GetEffectiveScale()
