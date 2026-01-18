@@ -1703,7 +1703,7 @@ function DF:CreateTextureInfo(texture, textureWidth, textureHeight, left, right,
 	return textureInfo
 end
 
----add a texture to the start or end of a string
+---add a texture to the start or end of a string using scape sequence
 ---@param text string
 ---@param textureInfo table
 ---@param bAddSpace any
@@ -1731,6 +1731,7 @@ function DF:AddTextureToText(text, textureInfo, bAddSpace, bAddAfterText)
 end
 
 ---return the size of a fontstring
+---usage: local fontsize = DF:GetFontSize(myFontString)
 ---@param fontString table
 ---@return number
 function DF:GetFontSize(fontString)
@@ -1739,6 +1740,7 @@ function DF:GetFontSize(fontString)
 end
 
 ---return the font of a fontstring
+---usage: local fontface = DF:GetFontFace(myFontString), fontface can also be called fontFile.
 ---@param fontString table
 ---@return string
 function DF:GetFontFace(fontString)
@@ -1755,6 +1757,8 @@ local ValidOutlines = {
 	["THICKOUTLINEMONOCHROME"] = true,
 }
 
+--outline flags are used with the function SetFont on fontstrings, signiture: fontString:SetFont(fontFile, size, outlineFlags) -> outlineFlags are usually just called 'flags', 'size' can also be found named as 'height'.
+--in the first index of the sub table there is the value to be used on SetFont, in the second index there is a user friendly name
 DF.FontOutlineFlags = {
 	{"", "None"},
 	{"MONOCHROME", "Monochrome"},
