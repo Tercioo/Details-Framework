@@ -16,6 +16,12 @@ BuildMenu does not provide a built-in cross-tab search index.
 Search works by rebuilding a temporary menu (usually with BuildMenuVolatile)
 using matched widget tables from previously built menuOptions arrays.
 
+BuildMenuVolatile vs BuildMenu:
+- BuildMenu creates persistent widgets on the parent frame.
+- BuildMenuVolatile wipes previous widgets (clears widget_to_disable_check)
+  and sets up a refresh timer to prevent rapid re-calls when values change.
+  This makes it ideal for search results that get rebuilt on each query.
+
 In practice, you need to:
 - Keep references to all option sub-frames.
 - Keep references to each sub-frame menuOptions table.
@@ -167,8 +173,8 @@ local function RebuildSearchIndex()
 					lastLabel = setting
 				end
 
-				-- only widgets that represent actual options should be indexed
-				if setting.name then
+				-- only visible widgets that represent actual options should be indexed
+				if setting.name and not setting.hidden then
 					allIndexedOptions[#allIndexedOptions+1] = {
 						setting = setting,
 						label = lastLabel,
@@ -295,7 +301,9 @@ local function CreateOptionsSearchPanel(optionsContainerFrame, searchFrame, topO
 	-- end)
 
 	mainSearchBox:SetHook("OnEnterPressed", function()
-		searchBox:SetText(mainSearchBox.text or "")
+		searchBox:SetText(mainSearchBox:GetText() or "")
+		-- RunHooksForWidget fires all registered hooks for the named script.
+		-- This triggers the searchBox OnEnterPressed hook above, executing the search.
 		searchBox:RunHooksForWidget("OnEnterPressed")
 		-- switch to search tab/frame here
 		-- optionsContainerFrame:SelectTabByIndex(SEARCH_TAB_INDEX)

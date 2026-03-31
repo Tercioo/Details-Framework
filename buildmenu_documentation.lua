@@ -28,6 +28,9 @@ Registered keys and practical meaning
 - execute: push button that runs func(param1, param2).
 - textentry: text input field.
 - image: texture row.
+- breakline: column break marker. Forces the layout cursor to jump to the
+	next column regardless of remaining vertical space (when use_scrollframe
+	is true) or when current column exceeds the height threshold (when false).
 - space: accepted alias, normalized to blank.
 - blank: spacing row / empty row.
 
@@ -57,6 +60,57 @@ Registered keys and practical meaning
 Important context
 - parseOptionsTypes() performs normalization before widget creation. Because of
 	that, aliases above are fully supported input types in menuOptions.
+
+Specialized dropdown get/set value reference
+- Specialized types auto-generate their values() from DF list generators
+	(defined in dropdown.lua). The consumer only needs to provide set and get;
+	values is ignored because the generator wires onclick directly to set.
+- The set callback signature for all specialized types is:
+	function(dropdownObject, fixedValue, selectedValue)
+- selectfont:
+	- Generator: DF:CreateFontListGenerator(set, include_default).
+	- get() should return the SharedMedia font name string (e.g. "Friz Quadrata TT").
+	- set receives the selected font name string as the third argument.
+	- Optional field: include_default (boolean) — when true, adds a "Default"
+	  entry at the top of the font list.
+- selectstatusbartexture:
+	- Generator: DF:CreateStatusbarTextureListGenerator(set).
+	- get() should return the SharedMedia statusbar texture name string.
+	- set receives the selected texture name string.
+	- Dropdown rows display a statusbar preview of each texture.
+- selectbackgroundtexture:
+	- Alias of selectstatusbartexture after normalization. Same generator and
+	  get/set contract — SharedMedia statusbar texture name strings.
+	  Semantically used for background textures but technically identical.
+- selectbordertexture:
+	- Alias of selectstatusbartexture after normalization. Same generator and
+	  get/set contract — SharedMedia statusbar texture name strings.
+	  Semantically used for border textures but technically identical.
+- selectcolor:
+	- Generator: DF:CreateColorListGenerator(set).
+	- get() should return a color table {r, g, b, a} or the string "blank".
+	- set receives the selected color table (or "blank" for no color).
+	- Options come from DF:GetDefaultColorList() plus a "no color" entry.
+- selectoutline:
+	- Generator: DF:CreateOutlineListGenerator(set).
+	- get() should return a font outline flag string: "", "OUTLINE", or
+	  "THICKOUTLINE" (values from DF.FontOutlineFlags).
+	- set receives the selected outline flag string.
+- selectanchor:
+	- Generator: DF:CreateAnchorPointListGenerator(set).
+	- get() should return an anchor point index (integer, 1-based index into
+	  DF.AnchorPoints: 1=topleft, 2=left, 3=bottomleft, etc.).
+	- set receives the selected index number.
+- selectaudio:
+	- Generator: DF:CreateAudioListGenerator(set).
+	- get() should return a SharedMedia sound file path string.
+	- set receives the selected sound file path string.
+	- Options come from LibSharedMedia "sound" hash table, sorted alphabetically.
+- selectframestrata:
+	- Generator: DF:CreateFrameStrataListGenerator(set).
+	- get() should return a frame strata string (e.g. "LOW", "MEDIUM", "HIGH").
+	- set receives the selected strata string.
+	- Options come from DF.FrameStrataLevels.
 
 =====================================================================
 2) Local helper function behavior
@@ -744,6 +798,16 @@ detailsFramework:BuildMenu(parent, menuOptions, xOffset, yOffset,
     height, useColon, textTemplate, dropdownTemplate, switchTemplate,
     switchIsCheckbox, sliderTemplate, buttonTemplate, valueChangeHook)
 ---------------------------------------------------------------------
+
+Source note
+- The source file contains two function definitions for
+	detailsFramework:BuildMenu at lines 1566 and 1574. The first (lines 1565-1571)
+	is a commented-out debug/profiling wrapper that times execution via
+	debugprofilestop() and prints elapsed milliseconds. It is wrapped in --[=[...]=]
+	and never runs. The second definition (line 1574) is the active implementation
+	documented below. The first definition is left in the source as a developer
+	convenience — uncomment it and rename the second to :BuildMenu22 to profile
+	menu construction time.
 
 Purpose
 - Builds a permanent options panel by creating one widget instance per entry in
@@ -1465,6 +1529,20 @@ Field: template
 
 Field: text_template
 - Font/text style override for label text attached to the widget.
+- Table format (same as DF.font_templates entries):
+	{
+		color = {r, g, b, a},  -- or a named color string like "orange", "yellow"
+		size = number,         -- font size in points (e.g. 9.6, 11)
+		font = string,         -- font file path or SharedMedia font name
+	}
+- Built-in templates accessible via DF:GetTemplate("font", name):
+	- "OPTIONS_FONT_TEMPLATE": {color = {1, 1, 1, 0.9}, size = 9.6} — standard option label
+	- "ORANGE_FONT_TEMPLATE": {color = {1, 0.8235, 0, 1}, size = 11} — section headers
+	- "SMALL_SILVER": {color = "silver", size = 9} — de-emphasized text
+- When text_template is set on a widgetTable, it overrides the textTemplate
+	argument passed to BuildMenu for that widget's label only.
+- The fallback chain is: widgetTable.text_template → BuildMenu's textTemplate
+	argument → DF.font_templates["ORANGE_FONT_TEMPLATE"].
 
 Field: button_template
 - Alternate template path used by some widgets (notably textentry fallback).
@@ -1474,6 +1552,35 @@ Field: width
 
 Field: height
 - Per-widget height override (or image row explicit height).
+
+Field: icontexture
+- Texture path or FileID for an icon prepended to the widget's label text.
+- Used by processLabelIcon() (label icons on all widget types) and by
+	setExecuteProperties() (button icons via SetIcon).
+- When set on a label-bearing widget, the icon appears before the label text
+	at the font height of the label.
+
+Field: icontexcoords
+- Table {left, right, top, bottom} UV coords for icontexture on execute
+	widgets. Passed to SetIcon() in setExecuteProperties().
+- Not used by processLabelIcon() — use iconcoords for label icons.
+
+Field: iconcoords
+- Table {left, right, top, bottom} UV coords for icontexture on label icons.
+- Used by processLabelIcon(). Defaults to {.1, .9, .1, .9} when absent.
+- Distinct from icontexcoords: iconcoords controls the label-prepended icon,
+	icontexcoords controls the execute/button icon.
+
+Field: iconsize
+- Table {width, height} pixel dimensions for the label-prepended icon.
+- Used by processLabelIcon(). Defaults to {fontHeight, fontHeight} — the
+	icon matches the label font size when not specified.
+
+Field: iconfilesize
+- Table {width, height} pixel dimensions of the source texture file for the
+	label-prepended icon.
+- Used by processLabelIcon() to calculate correct tex coords when the source
+	file is not the default 64x64. Defaults to {64, 64}.
 
 ---------------------------------------------------------------------
 D) Widget-type reference
@@ -1667,7 +1774,88 @@ Breakline row (column break marker inside menuOptions):
 	-- column still has vertical space.
 
 =====================================================================
-End of Part 8 — end of buildmenu.lua documentation
+End of Part 8
+=====================================================================
+
+=====================================================================
+
+=====================================================================
+Part 9: consumer API — interacting with the built panel
+=====================================================================
+
+Context for this section
+- After BuildMenu or BuildMenuVolatile returns, the parent frame has been
+	augmented with data structures and methods that the caller can use to
+	interact with the panel at runtime. This section documents the public
+	surface that consumers should rely on.
+
+---------------------------------------------------------------------
+9A) df_menu frame — fields and methods
+---------------------------------------------------------------------
+
+After SetAsOptionsPanel (called automatically by BuildMenu/BuildMenuVolatile
+when parent.widget_list is nil), the parent frame gains these members:
+
+Fields
+- parent.widget_list: array of all created widget objects, in menuOptions
+	order. Each entry is a DF widget (button, switch, slider, dropdown, etc.).
+- parent.widget_list_by_type: table keyed by widget pool type name
+	("dropdown", "switch", "slider", "color", "button", "textentry", "label",
+	"image"). Each value is an array of widgets of that type.
+- parent.widgetids: table keyed by widgetTable.id string/number → widget
+	object. Only populated for entries that had an id field.
+- parent.widget_to_disable_check: array of widgetTable entries that have a
+	disableif function. Used internally by checkForDisableIF().
+- parent.build_menu_options: reference to the menuOptions table passed to
+	BuildMenu. Stored for refresh access.
+
+Methods
+- parent:RefreshOptions()
+	Syncs all widget visuals from their model getters. For each widget in
+	widget_list that has a _get function:
+	  - label: calls SetText(_get()) when not language-managed.
+	  - select/dropdown: calls Select(_get()) to update the selected value.
+	  - toggle/switch: calls SetValue(_get()) to update the checked state.
+	  - range/slider: calls SetValue(_get()) to update the thumb position.
+	  - textentry: sets widget.text = _get().
+	Also re-evaluates disableif for all registered widgets and re-syncs
+	children_follow_enabled toggle chains.
+	Call this after changing the backing data model to update the UI.
+
+- parent:GetWidgetById(id)
+	Returns the widget object registered under the given id, or nil if not
+	found. Equivalent to parent.widgetids[id].
+	Use case: programmatically enable/disable a specific widget, read its
+	current value, or modify its properties after the menu has been built.
+
+---------------------------------------------------------------------
+9B) Typical post-build patterns
+---------------------------------------------------------------------
+
+Refreshing after external data changes:
+	-- After importing a profile or resetting defaults:
+	parent:RefreshOptions()
+
+Disabling a specific widget programmatically:
+	local widget = parent:GetWidgetById("myToggle")
+	if widget then
+		widget:Disable()
+	end
+
+Iterating all widgets of a type:
+	for _, switch in ipairs(parent.widget_list_by_type.switch) do
+		-- e.g. clear combat lockdown state
+		switch.lockdown = nil
+		switch:Enable()
+	end
+
+Accessing the widget created for a specific widgetTable entry:
+	-- After BuildMenu, each widgetTable entry has a .widget back-reference:
+	local myEntry = menuOptions[3]
+	local widgetObj = myEntry.widget  -- the created DF widget object
+
+=====================================================================
+End of Part 9 — end of buildmenu.lua documentation
 =====================================================================
 
 =====================================================================
