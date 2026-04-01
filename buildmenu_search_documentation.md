@@ -1,4 +1,3 @@
---[=[
 buildmenu search panel documentation
 
 Purpose
@@ -407,4 +406,4 @@ local sectionCOptions = {
 =====================================================================
 End of buildmenu search panel documentation
 =====================================================================
-]=]
+

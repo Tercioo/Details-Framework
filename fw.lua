@@ -1446,6 +1446,10 @@ function DF:SetFontFace(fontString, fontface)
 		fontface = font
 	end
 
+	if _G[fontface] then
+		fontface = _G[fontface]:GetFont()
+	end
+
 	local _, size, flags = fontString:GetFont()
 	return fontString:SetFont(fontface, size, flags)
 end
