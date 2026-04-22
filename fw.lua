@@ -1,5 +1,5 @@
 
-local dversion = 715
+local dversion = 717
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary(major, minor)
 
@@ -1771,7 +1771,7 @@ function DF:GetFontFace(fontString)
 end
 
 local ValidOutlines = {
-	["NONE"] = true,
+	[""] = true,
 	["MONOCHROME"] = true,
 	["OUTLINE"] = true,
 	["THICKOUTLINE"] = true,
@@ -1818,7 +1818,11 @@ function DF:SetFontOutline(fontString, outline)
         end
     end
 
-    outline = (not outline or outline == "NONE") and "" or outline
+	outline = (not outline or outline == "NONE") and "" or outline
+
+	if not ValidOutlines[outline] then
+		outline = ""
+	end
 
     fontString:SetFont(font, fontSize, outline)
 end

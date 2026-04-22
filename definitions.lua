@@ -420,7 +420,7 @@ GameCooltipFrame2 = {}
 ---@field AddClassIconToText fun(self:table, text:string, playerName:string, englishClassName:string, useSpec:boolean?, iconSize:number?) : string wrap 'text' with the class icon of 'playerName' using |T|t scape codes
 ---@field RemoveRealNameFromName fun(self:table, name:string) : string remove the realm name from a name string
 ---@field GetSpecInfoFromSpecId fun(self:table, specId:number) : specinfo
----@field GetSpecInfoFromSpecIcon fun(self:table, specIcon:string) : specinfo
+---@field GetSpecInfoFromSpecIcon fun(self:table, specIcon:number) : specinfo
 ---@field GetSpecIdFromSpecIcon fun(self:table, specIcon:number) : number?
 
 
