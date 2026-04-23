@@ -1,5 +1,5 @@
 
-local dversion = 718
+local dversion = 719
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary(major, minor)
 
@@ -1789,6 +1789,10 @@ end
 
 local ValidOutlines = {
 	[""] = true,
+	["SLUG"] = true,
+	["OUTLINE, SLUG"] = true, -- compatibility for existing slug values
+	["SLUG,OUTLINE"] = true, -- order does not matter here
+	["OUTLINE,SLUG"] = true,
 	["MONOCHROME"] = true,
 	["OUTLINE"] = true,
 	["THICKOUTLINE"] = true,
@@ -1800,6 +1804,9 @@ local ValidOutlines = {
 --in the first index of the sub table there is the value to be used on SetFont, in the second index there is a user friendly name
 DF.FontOutlineFlags = {
 	{"", "None"},
+	{"NONE", "None"}, -- backwards compatibility
+	{"SLUG", "Slug"},
+	{"SLUG,OUTLINE", "Outline Slug"},
 	{"MONOCHROME", "Monochrome"},
 	{"OUTLINE", "Outline"},
 	{"THICKOUTLINE", "Thick Outline"},
