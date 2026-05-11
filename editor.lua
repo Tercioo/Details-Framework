@@ -13,6 +13,10 @@ local wipe = table.wipe
 --maximum number of entries kept in the undo / redo stacks; oldest entries are dropped beyond this.
 local MAX_UNDO_STACK = 50
 
+--object types we've already warned about for "unrecognized type" so the message fires once per
+--type per session, not on every EditObject() call. keyed by the GetObjectType() string.
+local warnedUnrecognizedTypes = {}
+
 --shallow equality for undo snapshots. used to skip pushing undo entries when nothing actually
 --changed - this happens when BuildMenuVolatile fires set() during widget construction with the
 --current value, which would otherwise create no-op undo entries that wipe the redo stack.
@@ -93,6 +97,9 @@ end
 ---@field step number?
 ---@field usedecimals boolean?
 ---@field subkey string?
+---@field profileTable table? per-extra override of the registration's profileTable, so an option can read/write against a different scope (e.g., the profile root on a registration bound to a sub-table)
+---@field setter fun(object:any, value:any)?
+---@field dropdownFunc function?
 
 ---@class df_editor_objectinfo : table
 ---@field object uiobject
@@ -411,12 +418,14 @@ local attributes = {
 ---@class df_editobjectoptions : table
 ---@field use_colon boolean? if true a colon is shown after the option name
 ---@field can_move boolean? if true the object can be moved
+---@field can_click boolean? if true the live-preview click-to-select overlay is shown for this object
 ---@field icon any atlasName atlasTable (from DF:CreateAtlas) or texture path|id
 
 ---@type df_editobjectoptions
 local editObjectDefaultOptions = {
     use_colon = false,
     can_move = true,
+    can_click = true,
 }
 
 ---@class df_editor_defaultoptions : table
@@ -1135,6 +1144,17 @@ detailsFramework.EditorMixin = {
         elseif (objectType == "Frame" or objectType == "Button" or objectType == "StatusBar") then
             ---@cast object frame
             attributeList = attributes["Frame"]
+
+        else
+            --unrecognized type (e.g. EditBox, ScrollFrame, CheckButton, Cooldown). fall back to
+            --empty so the loop doesn't crash on #attributeList; the consumer's extraOptions still
+            --build into the menu. warn once per type so a developer notices but the message
+            --doesn't spam on every EditObject() call.
+            attributeList = {}
+            if (not warnedUnrecognizedTypes[objectType]) then
+                warnedUnrecognizedTypes[objectType] = true
+                print(("|cFFFFAA00DetailsFramework editor|r: object type %q has no built-in attributes; only extraOptions will appear in the menu."):format(tostring(objectType)))
+            end
         end
 
         --if there's extra options, add the attributeList to a new table and right after the extra options
@@ -1168,15 +1188,19 @@ detailsFramework.EditorMixin = {
             if (widgetType == "blank") then
                 menuOptions[#menuOptions+1] = {type = "blank"}
             else
+                --extras may override the registration's profileTable so a single option can read/write
+                --against a different scope - e.g. a global/root-level setting exposed on a registration
+                --that's otherwise bound to a sub-table via subTablePath.
+                local entryProfileTable = option.profileTable or profileTable
                 --get the key to be used on profile table
                 local profileKey = profileMap[option.key] or option.key
                 if profileKey then
                     local value
                     --if the key contains a dot or a bracket, it means it's a table path, example: "text_settings[1].width"
                     if (profileKey and (profileKey:match("%.") or profileKey:match("%["))) then --profileKey is a number
-                        value = detailsFramework.table.getfrompath(profileTable, profileKey)
+                        value = detailsFramework.table.getfrompath(entryProfileTable, profileKey)
                     else
-                        value = profileTable[profileKey]
+                        value = entryProfileTable[profileKey]
                     end
 
                     local bHasValue = type(value) ~= "nil"
@@ -1193,7 +1217,7 @@ detailsFramework.EditorMixin = {
                     end
 
                     if (bHasValue) then
-                        local parentTable = getParentTable(profileTable, profileKey)
+                        local parentTable = getParentTable(entryProfileTable, profileKey)
 
                         assert(detailsFramework:IsValidWidgetForBuildMenu(option.widget), "Invalid widget type for option with key and name: " .. option.key .. ", " .. option.label)
 
@@ -1213,11 +1237,11 @@ detailsFramework.EditorMixin = {
                                 parentTable[4] = value[4]
                                 value = parentTable
                             else
-                                detailsFramework.table.setfrompath(profileTable, profileKey, value)
+                                detailsFramework.table.setfrompath(entryProfileTable, profileKey, value)
                             end
 
                             if (self:GetOnEditCallback()) then
-                                self:GetOnEditCallback()(object, option.key, value, profileTable, profileKey)
+                                self:GetOnEditCallback()(object, option.key, value, entryProfileTable, profileKey)
                             end
 
                             --update the widget visual
@@ -1262,7 +1286,7 @@ detailsFramework.EditorMixin = {
                                 if (widgetType == "color") then
                                     oldSnapshot = {parentTable[1], parentTable[2], parentTable[3], parentTable[4]}
                                 else
-                                    oldSnapshot = detailsFramework.table.getfrompath(profileTable, profileKey)
+                                    oldSnapshot = detailsFramework.table.getfrompath(entryProfileTable, profileKey)
                                 end
 
                                 --pack color callback args (r, g, b, alpha) into a single table
@@ -1280,7 +1304,7 @@ detailsFramework.EditorMixin = {
                                 if (widgetType == "color") then
                                     newSnapshot = {parentTable[1], parentTable[2], parentTable[3], parentTable[4]}
                                 else
-                                    newSnapshot = detailsFramework.table.getfrompath(profileTable, profileKey)
+                                    newSnapshot = detailsFramework.table.getfrompath(entryProfileTable, profileKey)
                                 end
 
                                 --push undo entry. skip if the value didn't actually change - this
@@ -1309,7 +1333,7 @@ detailsFramework.EditorMixin = {
                         }
 
                         if (conditionalKeys[option.key]) then
-                            local bIsEnabled = conditionalKeys[option.key](object, profileTable, profileKey)
+                            local bIsEnabled = conditionalKeys[option.key](object, entryProfileTable, profileKey)
                             if (not bIsEnabled) then
                                 optionTable.disabled = true
                             end
@@ -1433,12 +1457,12 @@ detailsFramework.EditorMixin = {
                 local anchorYSlider = optionsFrame:GetWidgetById("anchoroffsety")
                 anchorYSlider:SetValueNoCallback(anchorSettings.y)
 
-                --save the new position
+                --anchorSettings IS the profile sub-table (assigned from getParentTable() in
+                --PrepareObjectForEditing for the anchor option). lines 1440-1441 above already
+                --mutated its .x and .y in place, so the data is persisted by the time we get
+                --here. fire the consumer callback so listeners react.
                 local profileTable, profileMap = self:GetEditingProfile()
                 local profileKey = profileMap.anchor
-                local parentTable = getParentTable(profileTable, profileKey)
-                parentTable.x = anchorSettings.x
-                parentTable.y = anchorSettings.y
 
                 if (self:GetOnEditCallback()) then
                     self:GetOnEditCallback()(object, "x", anchorSettings.x, profileTable, profileKey)
@@ -1553,7 +1577,8 @@ detailsFramework.EditorMixin = {
 
         localizedLabel = type(localizedLabel) == "string" and localizedLabel or "invalid label"
 
-        --a button to select the widget
+        --invisible button overlaid on the widget so clicking the live preview selects it for
+        --editing in the designer (in addition to clicking the left-panel list).
         local selectButton = CreateFrame("button", "$parentSelectButton" .. id, object:GetParent())
         selectButton:SetAllPoints(object)
 
@@ -1575,7 +1600,16 @@ detailsFramework.EditorMixin = {
         registeredObjects[#registeredObjects+1] = objectRegistered
         self.registeredObjectsByID[id] = objectRegistered
 
-        selectButton:SetFrameLevel(self:GetFrameLevel() + #registeredObjects)
+        --raise above the widget within the same parent so clicks land on selectButton, not the
+        --widget itself. previously used self:GetFrameLevel() + #registeredObjects which mixed
+        --frame levels from two different parent trees and only worked by coincidence of strata.
+        --textures and fontstrings are regions (not frames) and have no GetFrameLevel of their own,
+        --so treat their effective level as parent + 1 (mirroring how a child frame would sit).
+        --this is what lets a region nested inside a registered frame win over the frame's own
+        --selectButton: the region's button ends up at parentLevel + 2 vs the parent's parentLevel + 1.
+        ---@diagnostic disable-next-line: undefined-field
+        local widgetLevel = object.GetFrameLevel and object:GetFrameLevel() or (object:GetParent():GetFrameLevel() + 1)
+        selectButton:SetFrameLevel(widgetLevel + 1)
 
         local objectSelector = self:GetObjectSelector()
         objectSelector:RefreshMe()
@@ -1583,6 +1617,13 @@ detailsFramework.EditorMixin = {
         selectButton:SetScript("OnClick", function()
             self:EditObject(objectRegistered)
         end)
+
+        --suppress the click-to-select overlay when can_click is false. otherwise the
+        --invisible full-size button covers the widget area and intercepts clicks meant for
+        --overlapping registrations or child widgets.
+        if (not options.can_click) then
+            selectButton:Hide()
+        end
 
         --what to do after an object is registered?
         return objectRegistered
