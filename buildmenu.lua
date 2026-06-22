@@ -28,6 +28,8 @@ local _
 ---@field hasLabel any
 ---@field hidden boolean?
 ---@field inline boolean?
+---@field onenter function?
+---@field onleave function?
 ---@field widget table?
 ---@field disableif function? a function that returns true or nil, if true the widget get :Disable(), :Enabled() otherwise
 ---@field tags string[] optional tags that help the search bar to find the option
@@ -1768,6 +1770,21 @@ function detailsFramework:BuildMenuVolatile(parent, menuOptions, xOffset, yOffse
                     jumpToNextLine = false
                 end
 
+                if (widgetTable.onenter) then
+                    if (widgetCreated.SetHook) then
+                        widgetCreated:SetHook("OnEnter", widgetTable.onenter)
+                    else
+                        widgetCreated:SetScript("OnEnter", widgetTable.onenter)
+                    end
+                end
+                if (widgetTable.onleave) then
+                    if (widgetCreated.SetHook) then
+                        widgetCreated:SetHook("OnLeave", widgetTable.onleave)
+                    else
+                        widgetCreated:SetScript("OnLeave", widgetTable.onleave)
+                    end
+                end
+
                 if languageAddonId and widgetCreated then
                     widgetCreated.__languageAddonId = languageAddonId
                 end
@@ -2165,6 +2182,21 @@ function detailsFramework:BuildMenu(parent, menuOptions, xOffset, yOffset, heigh
                 widgetCreated = groupFrame
                 setWidgetId(parent, widgetTable, groupFrame)
                 jumpToNextLine = false
+            end
+
+            if (widgetTable.onenter) then
+                if (widgetCreated.SetHook) then
+                    widgetCreated:SetHook("OnEnter", widgetTable.onenter)
+                else
+                    widgetCreated:SetScript("OnEnter", widgetTable.onenter)
+                end
+            end
+            if (widgetTable.onleave) then
+                if (widgetCreated.SetHook) then
+                    widgetCreated:SetHook("OnLeave", widgetTable.onleave)
+                else
+                    widgetCreated:SetScript("OnLeave", widgetTable.onleave)
+                end
             end
 
             if languageAddonId and widgetCreated then

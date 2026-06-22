@@ -92,9 +92,12 @@ end
 ---@field step number?
 ---@field usedecimals boolean?
 ---@field subkey string?
+---@field desc string? tooltip text shown when the user hovers the widget
 ---@field profileTable table? per-extra override of the registration's profileTable, so an option can read/write against a different scope (e.g., the profile root on a registration bound to a sub-table)
 ---@field setter fun(object:any, value:any)?
 ---@field dropdownFunc function?
+---@field onenter? fun(widget:any) optional callback for live preview
+---@field onleave? fun(widget:any) optional callback (paired with onenter to revert the preview)
 ---@field text? string label widget: literal text to display when type == "label"
 ---@field name? string label widget: localization key fallback when type == "label"
 ---@field get? fun():string label widget: dynamic text getter when type == "label"
@@ -1442,6 +1445,9 @@ detailsFramework.EditorMixin = {
                             step = option.step,
                             usedecimals = option.usedecimals,
                             id = option.key,
+                            desc = option.desc,
+                            onenter = option.onenter,
+                            onleave = option.onleave,
                         }
 
                         --forwarded for the generic `dropdown` widget; BuildMenu expects `values`
