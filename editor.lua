@@ -1317,6 +1317,16 @@ detailsFramework.EditorMixin = {
                     if (bHasValue) then
                         local parentTable = getParentTable(entryProfileTable, profileKey)
 
+                        --color widgets mutate the color table in place to preserve references
+                        --(downstream code holds the same {r,g,b,a} pointer). getParentTable returns
+                        --the wrong thing for nested paths like "tank.colors.aggro" (it strips the
+                        --leaf and gives profile.tank.colors, so applyValue writes r/g/b/a into the
+                        --grouping table, not the color). value is already the color table at the
+                        --full path, so use it directly for color widgets at any nesting depth.
+                        if (widgetType == "color") then
+                            parentTable = value
+                        end
+
                         assert(detailsFramework:IsValidWidgetForBuildMenu(option.widget), "Invalid widget type for option with key and name: " .. option.key .. ", " .. option.label)
 
                         if (option.key == "anchor" or option.key == "anchoroffsetx" or option.key == "anchoroffsety") then
