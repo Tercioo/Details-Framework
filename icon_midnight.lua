@@ -290,15 +290,23 @@ detailsFramework.IconMixin = {
 
 			if (duration) then
 				local now = GetTime()
+				local noExpirationTime
 
-				local durationObject = duration
+				if type(duration) == "number" then
+					-- Classic/MoP: duration is a plain number in seconds, not a duration object
+					local expiration = (startTime or 0) + duration
+					iconFrame.timeRemaining = expiration - now
+					iconFrame.expirationTime = expiration
+					noExpirationTime = (duration == 0)
+					iconFrame.Cooldown:SetCooldown(startTime or 0, duration)
+				else
+					local durationObject = duration
+					iconFrame.timeRemaining = durationObject:GetRemainingDuration()
+					iconFrame.expirationTime = durationObject:GetEndTime()
+					noExpirationTime = durationObject:IsZero()
+					iconFrame.Cooldown:SetCooldownFromDurationObject(durationObject)
+				end
 
-				iconFrame.timeRemaining = durationObject:GetRemainingDuration()
-				iconFrame.expirationTime = durationObject:GetEndTime()
-				
-
-				local noExpirationTime = durationObject:IsZero()--C_UnitAuras.DoesAuraHaveExpirationTime(auraIconFrame.unitFrame.namePlateUnitToken, i)
-				iconFrame.Cooldown:SetCooldownFromDurationObject(durationObject)
 				iconFrame.Cooldown:SetAlphaFromBoolean(noExpirationTime, 0, 1)
 
 				if (self.options.show_text) then
