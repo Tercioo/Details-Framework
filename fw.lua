@@ -165,14 +165,15 @@ end
 ---return if the wow version the player is playing is a classic version of wow
 ---@return boolean
 function DF.IsTimewalkWoW()
-    if (buildInfo < 60000) then        return true    end
+    if (buildInfo < 60000 and not DF.IsForeverWow()) then        return true    end
 	return false
 end
 
 ---return if the wow version the player is playing is the vanilla version of wow
 ---@return boolean
 function DF.IsClassicWow()
-    if (buildInfo < 20000) then        return true    end
+    --if (buildInfo < 20000) then        return true    end
+	if (buildInfo < 20000 and not DF.IsForeverWow()) then        return true    end
 	return false
 end
 
@@ -256,11 +257,12 @@ function DF.IsMidnightWow()
 end
 
 function DF.IsAddonApocalypseWow()
-	return buildInfo >= 120000
+	return buildInfo >= 120000 or DF.IsForeverWow()
 end
 
 function DF.IsForeverWow()
 	if (buildInfo < 20000 and buildInfo >= 16001) then   return true end
+	return false
 end
 
 function DF.IsMidnightWowAPI()
@@ -268,7 +270,6 @@ function DF.IsMidnightWowAPI()
 	if (buildInfo < 60000 and buildInfo >= 50504) then   return true end
 	if (buildInfo < 30000 and buildInfo >= 20506) then   return true end
 	if (buildInfo < 20000 and buildInfo >= 11509) then   return true end
-	if (buildInfo < 20000 and buildInfo >= 16001) then   return true end
 	return false
 end
 
