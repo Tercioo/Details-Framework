@@ -489,7 +489,14 @@ local highlightFrameOnClickToggle = function(highlightFrame, mouseButton)
     local parent = highlightFrame:GetParent()
     local widget = parent.MyObject
 
-    local bNewState = not widget._get()
+    --a disabled toggle ignores clicks on its box, so it ignores clicks on its row too
+    if (rawget(widget, "lockdown")) then
+        return
+    end
+
+    --flip what the box shows: a get() that captured its value when the menu was built keeps returning
+    --that same value, and would set the same state on every click
+    local bNewState = not widget:GetValue()
     widget.OnSwitch(widget, nil, bNewState) --widget.OnSwitch = widgetTable.set
 
     if (bNewState) then
@@ -531,12 +538,19 @@ local setToggleProperties = function(parent, widget, widgetTable, currentXOffset
         widget:SetAsCheckBox()
     end
 
+    --a pooled switch may still be locked from the menu it was last used in, and a locked switch ignores
+    --SetValue, so it would keep showing that menu's value. it is unlocked here so the value below lands;
+    --onWidgetSetInUse and the disable checks lock it again when this menu wants it locked
+    if (rawget(widget, "lockdown")) then
+        widget:Enable()
+    end
+
     if (widgetTable.children_follow_enabled) then
         --widget.SetValueOriginal = widget.SetValue --perhaps widgetTable.set()  --perhaps setscrip OnClick
         widget.SetValueOriginal = widget.SetValueOriginal or widget.SetValue
         widget._name = widgetTable.name
 
-        local newSetFunc = function(thisWidget, value)
+        local updateChildren = function(value)
             --look for children ids
             local childrenids = widgetTable.childrenids
             --print(childrenids, type(childrenids))
@@ -564,9 +578,20 @@ local setToggleProperties = function(parent, widget, widgetTable, currentXOffset
                     end
                 end
             end
+        end
 
+        local newSetFunc = function(thisWidget, value)
+            updateChildren(value)
             thisWidget.SetValueOriginal(thisWidget, value)
             return value
+        end
+
+        --a click on the switch box itself runs OnSwitch and never SetValue, so the children follow from here too.
+        --OnSwitch is assigned fresh on every build above, so wrapping it does not stack on a pooled widget
+        widget.OnSwitch = function(thisWidget, fixedValue, value)
+            local result = widgetTable.set(thisWidget, fixedValue, value)
+            updateChildren(value)
+            return result
         end
 
         widget:SetValue(widgetTable.get())
@@ -990,6 +1015,15 @@ local checkForDisableIF = function(parent)
                 end
             end
         end
+    end
+end
+
+---re-runs every disableif of a built menu without setting any widget's value again. for menus whose get()
+---cannot be trusted to re-read the source, where RefreshOptions would put old values back on screen
+---@param parent frame the frame passed to BuildMenu or BuildMenuVolatile
+function detailsFramework:RefreshOptionsDisabledState(parent)
+    if (parent.widget_to_disable_check) then
+        checkForDisableIF(parent)
     end
 end
 

@@ -1,7 +1,8 @@
 -- SPDX-License-Identifier: LGPL-2.1-or-later
 -- Details Framework (DetailsFramework-1.0) -- see Libs/DF/LICENSE
 
-local dversion = 760
+local dversion = 762
+
 local major, minor = "DetailsFramework-1.0", dversion
 local DF, oldminor = LibStub:NewLibrary(major, minor)
 
@@ -3427,6 +3428,22 @@ DF.switch_templates["OPTIONS_CIRCLECHECKBOX_TEMPLATE"] = {
 	},
 }
 
+--toggle switch: square dark gray track with a square knob, knob sits left and light gray when off, right and yellow when on
+DF.switch_templates["OPTIONS_TOGGLE_TEMPLATE"] = {
+	backdrop = {edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1, bgFile = [[Interface\Buttons\WHITE8X8]], tileSize = 8, tile = true},
+	backdropcolor = {.16, .16, .16, 1},
+	backdropbordercolor = {0, 0, 0, 1},
+	width = 36,
+	height = 18,
+	enabled_backdropcolor = {.16, .16, .16, 1},
+	disabled_backdropcolor = {.16, .16, .16, 1},
+	onenterbordercolor = {.5, .5, .5, 1},
+	is_toggle = true, --will call SetAsToggle()
+	toggle_knob_padding = 3,
+	toggle_knob_color_off = {.7, .7, .7, 1},
+	toggle_knob_color_on = {1, .82, 0, 1},
+}
+
 DF.switch_templates["OPTIONS_CHECKBOX_BRIGHT_TEMPLATE"] = {
 	backdrop = {edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1, bgFile = [[Interface\Tooltips\UI-Tooltip-Background]], tileSize = 64, tile = true},
 	backdropcolor = {1, 1, 1, .5},
@@ -3521,6 +3538,36 @@ DF.slider_templates["MODERN_SLIDER_TEMPLATE"] = {
 	slider_middle = "_Minimal_SliderBar_Middle",
 	amount_color = "white",
 	amount_size = 12,
+	amount_outline = "outline",
+}
+
+--thin rounded track, the part left of the round thumb is filled with blue, the value shows above the thumb while hovering
+DF.slider_templates["OPTIONS_SLIDER_TRACK_TEMPLATE"] = {
+	is_track = true, --will call SetAsTrack()
+	track_height = 4,
+	track_color = {.29, .29, .31, 1},
+	track_fill_color = {.39, .73, .96, 1},
+	thumbtexture = [[Interface\CHARACTERFRAME\TempPortraitAlphaMaskSmall]],
+	thumbwidth = 14,
+	thumbheight = 14,
+	thumbcolor = {.39, .73, .96, 1},
+	amount_color = "white",
+	amount_size = 10,
+	amount_outline = "outline",
+}
+
+--same track as above, the thumb is a thin vertical blue rectangle instead of a circle
+DF.slider_templates["OPTIONS_SLIDER_TRACK_BAR_TEMPLATE"] = {
+	is_track = true, --will call SetAsTrack()
+	track_height = 4,
+	track_color = {.29, .29, .31, 1},
+	track_fill_color = {.39, .73, .96, 1},
+	thumbtexture = [[Interface\Buttons\WHITE8X8]],
+	thumbwidth = 6,
+	thumbheight = 16,
+	thumbcolor = {.39, .73, .96, 1},
+	amount_color = "white",
+	amount_size = 10,
 	amount_outline = "outline",
 }
 
