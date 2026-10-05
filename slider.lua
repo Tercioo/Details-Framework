@@ -305,9 +305,12 @@ DF:Mixin(DFSliderMetaFunctions, DF.ScriptHookMixin)
 			self.lock_texture:Hide()
 		end
 
-		--the track look shows the value only while hovering
-		if (not self.is_track) then
+		--the track look shows the value only while hovering, and a slider with a value box shows it there
+		if (not self.is_track and not self.value_box_shown) then
 			self.slider.amt:Show()
+		end
+		if (self.value_box) then
+			self.value_box:EnableMouse(true)
 		end
 		self:SetAlpha(1)
 
@@ -315,6 +318,7 @@ DF:Mixin(DFSliderMetaFunctions, DF.ScriptHookMixin)
 			self.checked_texture:Show()
 		end
 
+		DF:SetOptionLabelEnabled(self, true)
 		return rawset(self, "lockdown", false)
 	end
 
@@ -322,6 +326,10 @@ DF:Mixin(DFSliderMetaFunctions, DF.ScriptHookMixin)
 		self:ClearFocus()
 		self.slider:Disable()
 		self.slider.amt:Hide()
+		if (self.value_box) then
+			self.value_box:ClearFocus()
+			self.value_box:EnableMouse(false)
+		end
 		self:SetAlpha(.4)
 
 		if (not self.is_checkbox) then
@@ -341,6 +349,7 @@ DF:Mixin(DFSliderMetaFunctions, DF.ScriptHookMixin)
 			self.checked_texture:Show()
 		end
 
+		DF:SetOptionLabelEnabled(self, false)
 		return rawset(self, "lockdown", true)
 	end
 
@@ -363,7 +372,7 @@ DF:Mixin(DFSliderMetaFunctions, DF.ScriptHookMixin)
 
 		slider.thumb:SetAlpha(1)
 
-		if (object.is_track) then
+		if (object.is_track and not object.value_box_shown) then
 			slider.amt:Show()
 		end
 
@@ -710,9 +719,38 @@ DF:Mixin(DFSliderMetaFunctions, DF.ScriptHookMixin)
 		end
 	end
 
+	--paints a track slider's fill and thumb with the template's while-dragging colors, or back with its resting
+	--colors. a template without the while-dragging colors keeps the resting ones throughout
+	---@param object df_slider
+	---@param bIsDragging boolean
+	local setTrackDragColors = function(object, bIsDragging)
+		if (not object.is_track or not object.track_fill) then
+			return
+		end
+
+		local fillColor = object.track_fill_color
+		local thumbColor = object.thumb_color
+
+		if (bIsDragging) then
+			fillColor = object.track_fill_color_active or fillColor
+			thumbColor = object.thumb_color_active or thumbColor
+		end
+
+		object.track_left_cap:SetVertexColor(unpack(fillColor))
+		object.track_fill:SetVertexColor(unpack(fillColor))
+
+		if (thumbColor) then
+			object.thumb:SetVertexColor(unpack(thumbColor))
+		end
+	end
+
 	local OnMouseDown = function(slider, button)
 		local object = slider.MyObject
 		object.IsValueChanging = true
+
+		if (not rawget(object, "lockdown")) then
+			setTrackDragColors(object, true)
+		end
 
 		local kill = object:RunHooksForWidget("OnMouseDown", slider, button, object)
 		if (kill) then
@@ -727,6 +765,8 @@ DF:Mixin(DFSliderMetaFunctions, DF.ScriptHookMixin)
 	local OnMouseUp = function(slider, button)
 		local object = slider.MyObject
 		object.IsValueChanging = nil
+
+		setTrackDragColors(object, false)
 
 		--drag ended outside the slider, the value text was kept visible during the drag
 		if (object.is_track and not slider:IsMouseOver()) then
@@ -761,6 +801,149 @@ DF:Mixin(DFSliderMetaFunctions, DF.ScriptHookMixin)
 		end
 	end
 
+	--the value box: an optional text entry beside the slider showing its value, where the value can also be typed.
+	--built the first time a template asks for it and hidden until then, so a slider that never uses it costs nothing
+
+	--writes the slider's current value into its value box, unless the user is typing into it
+	---@param object df_slider
+	local refreshValueBoxText = function(object)
+		local valueBox = object.value_box
+		if (not valueBox or valueBox:HasFocus()) then
+			return
+		end
+
+		local value = object.slider:GetValue()
+		if (object.useDecimals) then
+			valueBox:SetText(string.format("%.2f", value))
+		else
+			valueBox:SetText(tostring(math.floor(value + 0.5)))
+		end
+	end
+
+	--applies the number typed into the value box, clamped to the slider's range; anything that is not a number is
+	--discarded and the box shows the slider's value again
+	---@param valueBox editbox
+	local onValueBoxEnterPressed = function(valueBox)
+		local object = valueBox.MyObject
+		local typedValue = do_precision(valueBox:GetText())
+
+		valueBox:ClearFocus()
+
+		if (typedValue and not rawget(object, "lockdown")) then
+			local minValue, maxValue = object.slider:GetMinMaxValues()
+			typedValue = math.max(minValue, math.min(maxValue, typedValue))
+
+			if (not object.useDecimals) then
+				typedValue = math.floor(typedValue + 0.5)
+			end
+
+			object.slider:SetValue(typedValue)
+		end
+
+		refreshValueBoxText(object)
+	end
+
+	--leaving the box without pressing enter, by escape or by clicking elsewhere, discards what was typed
+	---@param valueBox editbox
+	local onValueBoxFocusLost = function(valueBox)
+		valueBox:HighlightText(0, 0)
+		refreshValueBoxText(valueBox.MyObject)
+	end
+
+	---@param valueBox editbox
+	local onValueBoxEscapePressed = function(valueBox)
+		valueBox:ClearFocus()
+	end
+
+	---@param valueBox editbox
+	local onValueBoxFocusGained = function(valueBox)
+		valueBox:HighlightText()
+	end
+
+	---@param object df_slider
+	---@return editbox
+	local createValueBox = function(object)
+		local valueBox = CreateFrame("EditBox", nil, object.slider, "BackdropTemplate")
+		valueBox:SetAutoFocus(false)
+		valueBox:SetJustifyH("center")
+		valueBox:SetFontObject("GameFontHighlightSmall")
+		valueBox:SetTextInsets(2, 2, 0, 0)
+		valueBox:SetFrameLevel(object.slider:GetFrameLevel() + 2)
+		valueBox:SetBackdrop({bgFile = [[Interface\Buttons\WHITE8X8]], edgeFile = [[Interface\Buttons\WHITE8X8]], edgeSize = 1})
+		valueBox.MyObject = object
+
+		valueBox:SetScript("OnEnterPressed", onValueBoxEnterPressed)
+		valueBox:SetScript("OnEscapePressed", onValueBoxEscapePressed)
+		valueBox:SetScript("OnEditFocusLost", onValueBoxFocusLost)
+		valueBox:SetScript("OnEditFocusGained", onValueBoxFocusGained)
+
+		valueBox:Hide()
+		object.value_box = valueBox
+		return valueBox
+	end
+
+	--where the value box sits against the slider, and how far from it
+	local valueBoxAnchors = {
+		right = {"left", "right", 1, 0},
+		left = {"right", "left", -1, 0},
+		top = {"bottom", "top", 0, 1},
+		bottom = {"top", "bottom", 0, -1},
+	}
+
+	---show or hide the value box. side is "left", "right" (default), "top" or "bottom"
+	---@param bIsShown boolean
+	---@param side string?
+	---@param width number? default 38
+	---@param height number? default 22
+	---@param gap number? space between the box and the slider, default 4
+	function DFSliderMetaFunctions:SetValueBox(bIsShown, side, width, height, gap)
+		if (not bIsShown) then
+			self.value_box_shown = false
+			if (self.value_box) then
+				self.value_box:ClearFocus()
+				self.value_box:Hide()
+			end
+			return
+		end
+
+		local valueBox = self.value_box or createValueBox(self)
+		side = valueBoxAnchors[side] and side or "right"
+		gap = gap or 4
+
+		self.value_box_shown = true
+		self.value_box_side = side
+		self.value_box_gap = gap
+
+		local anchor = valueBoxAnchors[side]
+		valueBox:SetSize(width or 38, height or 22)
+		valueBox:ClearAllPoints()
+		valueBox:SetPoint(anchor[1], self.slider, anchor[2], anchor[3] * gap, anchor[4] * gap)
+		valueBox:EnableMouse(not rawget(self, "lockdown"))
+		valueBox:Show()
+
+		--the box shows the value, so the value text drawn on the slider would only repeat it
+		self.amt:Hide()
+
+		refreshValueBoxText(self)
+	end
+
+	---how much width the value box takes beside the slider: its width plus the gap when it sits on the left or the
+	---right, zero when it is hidden or sits above or below. a layout giving the slider a fixed width subtracts it
+	---@return number space
+	---@return string? side
+	function DFSliderMetaFunctions:GetValueBoxSpace()
+		if (not self.value_box_shown) then
+			return 0
+		end
+
+		local side = self.value_box_side
+		if (side == "left" or side == "right") then
+			return self.value_box:GetWidth() + self.value_box_gap, side
+		end
+
+		return 0, side
+	end
+
 	local OnValueChanged = function(slider)
 		local object = slider.MyObject
 
@@ -784,6 +967,7 @@ DF:Mixin(DFSliderMetaFunctions, DF.ScriptHookMixin)
 		else
 			slider.amt:SetText(math.floor(amt))
 		end
+		refreshValueBoxText(object)
 		object.ivalue = amt
 
 		if (object.NoCallback) then
@@ -933,6 +1117,7 @@ local switch_disable = function(self)
 	end
 
 	self:SetAlpha(.4)
+	DF:SetOptionLabelEnabled(self, false)
 	rawset(self, "lockdown", true)
 end
 
@@ -956,6 +1141,7 @@ local switch_enable = function(self)
 	end
 
 	self:SetAlpha(1)
+	DF:SetOptionLabelEnabled(self, true)
 	return rawset(self, "lockdown", false)
 end
 
@@ -1360,7 +1546,7 @@ local unset_as_track = function(self)
 
 	self.amt:ClearAllPoints()
 	self.amt:SetPoint("center", self.thumb, "center")
-	if (not rawget(self, "lockdown")) then
+	if (not rawget(self, "lockdown") and not self.value_box_shown) then
 		self.amt:Show()
 	end
 end
@@ -1438,6 +1624,8 @@ function DFSliderMetaFunctions:SetTemplate(template)
 		if (self.thumb) then
 			local r, g, b, a = DF:ParseColors(template.thumbcolor)
 			self.thumb:SetVertexColor(r, g, b, a)
+			--kept so a track slider can return to it after being dragged
+			self.thumb_color = {r, g, b, a}
 		end
 	end
 
@@ -1493,9 +1681,37 @@ function DFSliderMetaFunctions:SetTemplate(template)
 			if (template.track_fill_color) then
 				fillColor = {DF:ParseColors(template.track_fill_color)}
 			end
+
+			--optional colors for the fill and the thumb while the thumb is being dragged. set or cleared every
+			--time, so a pooled slider does not keep the ones of the template it had before
+			if (template.track_fill_color_active) then
+				self.track_fill_color_active = {DF:ParseColors(template.track_fill_color_active)}
+			else
+				self.track_fill_color_active = nil
+			end
+			if (template.thumbcolor_active) then
+				self.thumb_color_active = {DF:ParseColors(template.thumbcolor_active)}
+			else
+				self.thumb_color_active = nil
+			end
+
 			self:SetAsTrack(trackColor, fillColor, template.track_height)
 		else
 			unset_as_track(self)
+		end
+
+		--the value box belongs to the template too, so a pooled slider given a template without it loses it.
+		--after the track look, which decides on its own whether the value text above the thumb is shown
+		if (template.value_box) then
+			self:SetValueBox(true, template.value_box_side, template.value_box_width, template.value_box_height, template.value_box_gap)
+
+			local valueBox = self.value_box
+			valueBox:SetBackdropColor(DF:ParseColors(template.value_box_backdropcolor or {.1, .1, .1, 1}))
+			valueBox:SetBackdropBorderColor(DF:ParseColors(template.value_box_bordercolor or {0, 0, 0, 1}))
+			DF:SetFontColor(valueBox, template.value_box_text_color or "white")
+			DF:SetFontSize(valueBox, template.value_box_text_size or 10)
+		else
+			self:SetValueBox(false)
 		end
 	end
 
@@ -1522,6 +1738,9 @@ end
 ---@field SetValueNoCallback fun(value: number)
 ---@field SetThumbSize fun(width:number, height:number)
 ---@field SetAsTrack fun(self:df_slider, trackColor:table?, fillColor:table?, trackHeight:number?)
+---@field SetValueBox fun(self:df_slider, bIsShown:boolean, side:string?, width:number?, height:number?, gap:number?) show or hide the text entry beside the slider that shows and takes its value. side: "left", "right", "top" or "bottom"
+---@field GetValueBoxSpace fun(self:df_slider):number, string? width the value box takes beside the slider (zero above, below or hidden), and its side
+---@field value_box editbox? the value box, nil until a template or SetValueBox first asks for it
 ---@field ClearFocus fun()
 ---@field SetValueChangedFunction fun(self:df_slider, func: function)
 

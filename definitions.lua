@@ -341,6 +341,7 @@ GameCooltipFrame2 = {}
 ---@field SetFontSize fun(self:table, fontstring:fontstring, size:number)
 ---@field GetFontSize fun(self:table, fontstring:fontstring) : number return the font size of the fontstring
 ---@field SetFontColor fun(self:table, fontstring:fontstring, red:any, green:number?, blue:number?, alpha:number?)
+---@field SetOptionLabelEnabled fun(self:table, widget:table, bIsEnabled:boolean) gray out the option name BuildMenu shows beside a widget while it is disabled, and restore its color once enabled
 ---@field SetFontFace fun(self:table, fontstring:fontstring, font:string)
 ---@field SetFontDefault fun(self:table, fontstring:fontstring)
 ---@field GetFontFace fun(self:table, fontstring:fontstring) : string return the font face of the fontstring

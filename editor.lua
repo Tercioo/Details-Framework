@@ -458,6 +458,7 @@ local editObjectDefaultOptions = {
 ---@field switch_template table
 ---@field button_template table
 ---@field slider_template table
+---@field color_template table? template for the color pickers, its width and height included; nil keeps them 18 x 18 with the switch template
 ---@field no_anchor_points boolean
 ---@field start_editing_callback fun(editorFrame: df_editor, registeredObject: df_editor_objectinfo)?
 ---@field selection_texture string
@@ -1572,6 +1573,10 @@ detailsFramework.EditorMixin = {
         local options_button_template = self.options.button_template
         local options_slider_template = self.options.slider_template
         local options_text_template = self.options.text_template
+
+        --color pickers have no slot among BuildMenuVolatile's arguments, so their template travels on the menu
+        --table. nil keeps the 18 x 18 picker drawn with the switch template
+        menuOptions.color_template = self.options.color_template
 
         --remove any blank spaces at the start of the menu
         while (true) do

@@ -689,8 +689,13 @@ local setRangeProperties = function(parent, widget, widgetTable, currentXOffset,
     widget.slider:SetValue(currentValue or 0)
     widget.ivalue = widget.slider:GetValue()
 
+    --a value box beside the slider shares the widget's width with it, so the slider is shortened by the room the
+    --box takes, and moved right past it when the box sits on the left
+    local valueBoxSpace, valueBoxSide = widget:GetValueBoxSpace()
+    local valueBoxLeftSpace = valueBoxSide == "left" and valueBoxSpace or 0
+
     if (widgetWidth) then
-        widget:SetWidth(widgetWidth)
+        widget:SetWidth(widgetWidth - valueBoxSpace)
     end
     if (widgetHeight) then
         widget:SetHeight(widgetHeight)
@@ -724,7 +729,7 @@ local setRangeProperties = function(parent, widget, widgetTable, currentXOffset,
 
     if (bAlignAsPairs) then
         PixelUtil.SetPoint(label, "topleft", widget:GetParent(), "topleft", currentXOffset, currentYOffset)
-        PixelUtil.SetPoint(widget.widget, "left", label, "left", nAlignAsPairsLength, 0)
+        PixelUtil.SetPoint(widget.widget, "left", label, "left", nAlignAsPairsLength + valueBoxLeftSpace, 0)
 
         if (not widget.highlightFrame) then
             local highlightFrame = createOptionHighlightFrame(widget, label, (widgetWidth or 140) + nAlignAsPairsLength + 5)
@@ -733,7 +738,7 @@ local setRangeProperties = function(parent, widget, widgetTable, currentXOffset,
 
         widget.bAttachButtonsToLeft = true
     else
-        widget:SetPoint("left", label, "right", 2, 0)
+        widget:SetPoint("left", label, "right", 2 + valueBoxLeftSpace, 0)
         label:SetPoint("topleft", parent, "topleft", currentXOffset, currentYOffset)
     end
 
@@ -751,7 +756,7 @@ local setRangeProperties = function(parent, widget, widgetTable, currentXOffset,
     return maxColumnWidth, maxWidgetWidth
 end
 
-local setColorProperties = function(parent, widget, widgetTable, currentXOffset, currentYOffset, template, widgetWidth, widgetHeight, bAlignAsPairs, nAlignAsPairsLength, valueChangeHook, maxColumnWidth, maxWidgetWidth, bUseBoxFirstOnAllWidgets, extraPaddingY)
+local setColorProperties = function(parent, widget, widgetTable, currentXOffset, currentYOffset, template, widgetWidth, widgetHeight, bAlignAsPairs, nAlignAsPairsLength, valueChangeHook, maxColumnWidth, maxWidgetWidth, bUseBoxFirstOnAllWidgets, extraPaddingY, colorTemplate)
     widget._get = widgetTable.get
     widget.widget_type = "color"
 
@@ -774,9 +779,18 @@ local setColorProperties = function(parent, widget, widgetTable, currentXOffset,
         end
     --]=]
 
-    widget:SetTemplate(template)
-    widget:SetWidth(18)
-    widget:SetHeight(18)
+    --a menu can give its color pickers a template of their own, menuOptions.color_template, which also decides
+    --their size; without one they take the template they always have and stay 18 x 18
+    if (colorTemplate) then
+        local parsedTemplate = detailsFramework:ParseTemplate("button", colorTemplate)
+        widget:SetTemplate(parsedTemplate)
+        widget:SetWidth(parsedTemplate.width or 18)
+        widget:SetHeight(parsedTemplate.height or 18)
+    else
+        widget:SetTemplate(template)
+        widget:SetWidth(18)
+        widget:SetHeight(18)
+    end
 
     widget:SetHook("OnColorChanged", widgetTable.set)
 
@@ -1766,7 +1780,7 @@ function detailsFramework:BuildMenuVolatile(parent, menuOptions, xOffset, yOffse
  
                     processLabelIcon(colorpick.hasLabel, widgetTable, languageTable, widgetTable.text_template or textTemplate, useColon, languageAddonId)
 
-                    maxColumnWidth, maxWidgetWidth, extraPaddingY = setColorProperties(parent, colorpick, widgetTable, currentXOffset, currentYOffset, switchTemplate, widgetWidth, widgetHeight, bAlignAsPairs, nAlignAsPairsLength, valueChangeHook, maxColumnWidth, maxWidgetWidth, bUseBoxFirstOnAllWidgets, extraPaddingY)
+                    maxColumnWidth, maxWidgetWidth, extraPaddingY = setColorProperties(parent, colorpick, widgetTable, currentXOffset, currentYOffset, switchTemplate, widgetWidth, widgetHeight, bAlignAsPairs, nAlignAsPairsLength, valueChangeHook, maxColumnWidth, maxWidgetWidth, bUseBoxFirstOnAllWidgets, extraPaddingY, menuOptions.color_template)
                     amountLineWidgetAdded = amountLineWidgetAdded + 1
 
                 --button
@@ -2155,7 +2169,7 @@ function detailsFramework:BuildMenu(parent, menuOptions, xOffset, yOffset, heigh
 
                 processLabelIcon(colorpick.hasLabel, widgetTable, languageTable, widgetTable.text_template or textTemplate, useColon, languageAddonId)
 
-                maxColumnWidth, maxWidgetWidth, extraPaddingY = setColorProperties(parent, colorpick, widgetTable, currentXOffset, currentYOffset, buttonTemplate, widgetWidth, widgetHeight, bAlignAsPairs, nAlignAsPairsLength, valueChangeHook, maxColumnWidth, maxWidgetWidth, bUseBoxFirstOnAllWidgets, extraPaddingY)
+                maxColumnWidth, maxWidgetWidth, extraPaddingY = setColorProperties(parent, colorpick, widgetTable, currentXOffset, currentYOffset, buttonTemplate, widgetWidth, widgetHeight, bAlignAsPairs, nAlignAsPairsLength, valueChangeHook, maxColumnWidth, maxWidgetWidth, bUseBoxFirstOnAllWidgets, extraPaddingY, menuOptions.color_template)
 
                 --store the widget created into the overall table and the widget by type
                 table.insert(parent.widget_list, colorpick)

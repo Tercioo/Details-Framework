@@ -72,6 +72,7 @@ function detailsFramework:CreateEditor(parent, name, options)
 | `switch_template` | template | OPTIONS_CHECKBOX_TEMPLATE | Visual style for toggles. |
 | `button_template` | template | OPTIONS_BUTTON_TEMPLATE | Visual style for buttons (incl. the Undo/Redo toolbar buttons). |
 | `slider_template` | template | OPTIONS_SLIDER_TEMPLATE | Visual style for sliders. |
+| `color_template` | template? | nil | Visual style for color pickers, width and height included (e.g. DESIGNER_COLORPICK_TEMPLATE, 36x18). nil keeps them 18x18 drawn with `switch_template`. |
 | `text_template` | template | OPTIONS_FONT_TEMPLATE | Visual style for label text in the build-menu. |
 | `no_anchor_points` | boolean | `false` | If true, suppresses the anchor-point selection UI for the anchor option. |
 | `start_editing_callback` | function? | nil | `function(editorFrame, registeredObjectInfo)` called at the end of every `EditObject`. |
