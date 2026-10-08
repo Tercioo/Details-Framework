@@ -2253,6 +2253,8 @@ detailsFramework.EditorMixin = {
         --stop receiving key events while hidden so Ctrl+Z / Ctrl+Y fall back to the
         --player's combat keybinds.
         self:EnableKeyboard(false)
+        self:UnregisterEvent("PLAYER_REGEN_DISABLED")
+        self:UnregisterEvent("PLAYER_REGEN_ENABLED")
     end,
 
     ---@param self df_editor
@@ -2265,8 +2267,14 @@ detailsFramework.EditorMixin = {
         self.overTheTopFrame:Show()
 
         --start receiving Ctrl+Z / Ctrl+Y while the editor is shown.
-        self:EnableKeyboard(true)
-        self:SetPropagateKeyboardInput(true)
+        --SetPropagateKeyboardInput is protected in combat, OnEvent takes the keyboard after it
+        if (not InCombatLockdown()) then
+            self:EnableKeyboard(true)
+            self:SetPropagateKeyboardInput(true)
+        end
+
+        self:RegisterEvent("PLAYER_REGEN_DISABLED")
+        self:RegisterEvent("PLAYER_REGEN_ENABLED")
     end,
 }
 
@@ -2341,6 +2349,10 @@ function detailsFramework:CreateEditor(parent, name, options)
     --handler only fires while the editor is visible; combat keybinds work normally otherwise.
     --propagation is left enabled for non-shortcut keys so other keybinds still pass through.
     editorFrame:SetScript("OnKeyDown", function(self, key)
+        if (InCombatLockdown()) then
+            return
+        end
+
         if (IsControlKeyDown() and key == "Z") then
             self:SetPropagateKeyboardInput(false)
             if (IsShiftKeyDown()) then
@@ -2352,6 +2364,18 @@ function detailsFramework:CreateEditor(parent, name, options)
             self:SetPropagateKeyboardInput(false)
             self:Redo()
         else
+            self:SetPropagateKeyboardInput(true)
+        end
+    end)
+
+    --registered only while shown. PLAYER_REGEN_DISABLED is the last event before lockdown,
+    --so the keyboard is handed back to the player's keybinds while that is still allowed
+    editorFrame:SetScript("OnEvent", function(self, event)
+        if (event == "PLAYER_REGEN_DISABLED") then
+            self:SetPropagateKeyboardInput(true)
+            self:EnableKeyboard(false)
+        else
+            self:EnableKeyboard(true)
             self:SetPropagateKeyboardInput(true)
         end
     end)
