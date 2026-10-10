@@ -89,6 +89,7 @@ end
 ---@field UndoButton df_button?
 ---@field RedoButton df_button?
 ---@field resetButtons df_button[] the reset to default buttons, one per option row, reused on every menu build
+---@field bIsResettingOption boolean? true while a reset button writes its default, gives that undo step a key of its own
 ---each undo entry is a pair of closures. coalesceKey lets adjacent entries from the same widget
 ---(e.g. continuous slider drag) merge into one stack entry instead of N.
 ---@class undostate : table
@@ -432,6 +433,7 @@ local attributes = {
 ---@field RegisterObject fun(self:df_editor, object:uiobject|uiobject[], localizedLabel:string, id:string, profileTable:table, subTablePath:string, profileKeyMap:table, extraOptions:table?, callback:function?, options:df_editobjectoptions?, refFrame:frame, defaultValues:df_editor_defaultvalues?):df_editor_objectinfo register one or more widgets under a single logical entry. When an array of widgets is passed, all members share the same option set and any in-place selection click selects the registration with the clicked member becoming the brackets/mover focus. All members must share the same object type. defaultValues are what the reset to default buttons put back.
 ---@field GetResetButtonSize fun(self:df_editor):number the width and height of the reset to default buttons, the height of the dropdowns
 ---@field LayoutResetButtons fun(self:df_editor, resetEntries:df_editor_resetentry[], widgetWidth:number) place a reset to default button beside each option row that has one
+---@field RefreshResetButtonStates fun(self:df_editor) enable each shown reset button whose option has a default and whose widget is enabled
 ---@field ResetOptionToDefault fun(self:df_editor, resetEntry:df_editor_resetentry) set an option back to its default, through the same path as a user edit so it can be undone
 ---@field UnregisterObject fun(self:df_editor, object:uiobject)
 ---@field OnHide fun(self:df_editor)
@@ -552,6 +554,20 @@ local getOptionDefaultValue = function(defaultValues, optionKey, profileTable, p
             return defaultValue
         end
     end
+end
+
+---the menu widgets do not agree on how they are disabled: dropdowns, sliders and toggles set 'lockdown' and leave their
+---frame enabled, color pickers and text entries disable their frame
+---@param widget table
+---@return boolean
+local isOptionWidgetEnabled = function(widget)
+    if (rawget(widget, "lockdown")) then
+        return false
+    end
+    if (widget.IsEnabled and not widget:IsEnabled()) then
+        return false
+    end
+    return true
 end
 
 local onClickResetButton = function(blizzButton, mouseButton, editorFrame, resetEntry)
@@ -1114,6 +1130,7 @@ detailsFramework.EditorMixin = {
     ---@param self df_editor
     RefreshDisabledOptions = function(self)
         detailsFramework:RefreshOptionsDisabledState(self:GetOptionsFrame())
+        self:RefreshResetButtonStates()
     end,
 
     ---the reset buttons are squares as tall as the dropdowns
@@ -1189,7 +1206,25 @@ detailsFramework.EditorMixin = {
                 resetButton:ClearAllPoints()
                 resetButton:SetPoint("left", widgetFrame, "right", xOffset, 0)
 
-                if (bHasDefault) then
+                resetButton.resetEntry = resetEntry
+                resetButton:Show()
+            end
+        end
+
+        self:RefreshResetButtonStates()
+    end,
+
+    ---enable each shown reset button whose option has a default and whose widget is enabled. runs after every menu
+    ---build, after RefreshDisabledOptions and after every value change in the menu, which is when a toggle enables or
+    ---disables the options that follow it
+    ---@param self df_editor
+    RefreshResetButtonStates = function(self)
+        local resetButtons = self.resetButtons
+        for i = 1, #resetButtons do
+            local resetButton = resetButtons[i]
+            if (resetButton:IsShown()) then
+                local resetEntry = resetButton.resetEntry
+                if (resetEntry.defaultValue ~= nil and isOptionWidgetEnabled(resetEntry.optionTable.widget)) then
                     resetButton:Enable()
                     resetButton.ResetIcon:SetDesaturated(false)
                     resetButton.ResetIcon:SetAlpha(1)
@@ -1198,8 +1233,6 @@ detailsFramework.EditorMixin = {
                     resetButton.ResetIcon:SetDesaturated(true)
                     resetButton.ResetIcon:SetAlpha(RESET_ICON_DISABLED_ALPHA)
                 end
-
-                resetButton:Show()
             end
         end
     end,
@@ -1209,17 +1242,23 @@ detailsFramework.EditorMixin = {
     ResetOptionToDefault = function(self, resetEntry)
         local optionTable = resetEntry.optionTable
         local defaultValue = resetEntry.defaultValue
-        if (defaultValue == nil) then
+        if (defaultValue == nil or not isOptionWidgetEnabled(optionTable.widget)) then
             return
         end
 
-        --the menu's own set() writes the profile, runs the callback and the setter, and records the undo step
-        if (resetEntry.widgetType == "color") then
-            local r, g, b, a = detailsFramework:ParseColors(defaultValue)
-            optionTable.set(optionTable.widget, r, g, b, a)
-        else
-            optionTable.set(optionTable.widget, nil, defaultValue)
-        end
+        --the menu's own set() writes the profile, runs the callback and the setter, and records the undo step.
+        --the flag gives that undo step a key of its own, so it is not merged with an edit of the same option made
+        --just before or just after the reset; the flag is cleared even when set() errors
+        self.bIsResettingOption = true
+        xpcall(function()
+            if (resetEntry.widgetType == "color") then
+                local r, g, b, a = detailsFramework:ParseColors(defaultValue)
+                optionTable.set(optionTable.widget, r, g, b, a)
+            else
+                optionTable.set(optionTable.widget, nil, defaultValue)
+            end
+        end, geterrorhandler())
+        self.bIsResettingOption = false
 
         --the widgets show the values read when the menu was built, so the menu is built again to show the default and
         --anything that follows it, such as anchor offsets and options it enables; the scroll is kept where the user left it
@@ -1664,7 +1703,7 @@ detailsFramework.EditorMixin = {
                                     if (registered) then
                                         self:AddToUndoHistory({
                                             objectId = registered.id,
-                                            coalesceKey = tostring(registered.id) .. ":" .. tostring(option.key),
+                                            coalesceKey = tostring(registered.id) .. ":" .. tostring(option.key) .. (self.bIsResettingOption and ":reset" or ""),
                                             undo = function() applyValue(oldSnapshot) end,
                                             redo = function() applyValue(newSnapshot) end,
                                         })
@@ -1790,7 +1829,12 @@ detailsFramework.EditorMixin = {
         --~build ~menu ~volatile
         menuOptions.no_refresh_on_change = true --the editor .get functions just return a value instead of getting the value from the profile
         --the row highlight sits 5 pixels above its label, so the first row starts 7 pixels down to keep it inside the canvas
-        detailsFramework:BuildMenuVolatile(optionsFrame, menuOptions, 2, -7, maxHeight, bUseColon, options_text_template, options_dropdown_template, options_switch_template, bSwitchIsCheckbox, options_slider_template, options_button_template)
+        --the value change hook runs after a toggle has enabled or disabled the options that follow it, so the reset
+        --buttons follow too
+        local onMenuValueChanged = function()
+            self:RefreshResetButtonStates()
+        end
+        detailsFramework:BuildMenuVolatile(optionsFrame, menuOptions, 2, -7, maxHeight, bUseColon, options_text_template, options_dropdown_template, options_switch_template, bSwitchIsCheckbox, options_slider_template, options_button_template, onMenuValueChanged)
 
         --runs with the buttons off too, so the ones a previous menu showed are hidden
         self:LayoutResetButtons(resetEntries, widgetWidth)

@@ -537,7 +537,9 @@ The argument is optional; a registration without it behaves as if no option has 
 
 ### What a click does
 
-`editor:ResetOptionToDefault(resetEntry)` calls the row's own `set()` with the default, so it goes through the same path as a user edit: the profile is written, the 8th-arg callback and the setter run, and an undo entry is pushed (Ctrl+Z brings the old value back). Colors are passed through `ParseColors`, so any color format works as a default. Then the menu is rebuilt (`Refresh`), because the widgets show the values read at build time; the scroll position is kept.
+`editor:ResetOptionToDefault(resetEntry)` calls the row's own `set()` with the default, so it goes through the same path as a user edit: the profile is written, the 8th-arg callback and the setter run, and an undo entry is pushed (Ctrl+Z brings the old value back). That entry gets a coalesce key of its own (`<id>:<key>:reset`), so it is never merged with an edit of the same option made just before or after: edit 10 → 20, reset → 5, Ctrl+Z gives 20, Ctrl+Z again gives 10.
+
+A reset button is enabled only while its option has a default AND its widget is enabled. It follows the widget when `enable_if`, `disableif` or a `children_follow_enabled` toggle disables it: the states are re-read after every menu build, after every value change in the menu, and in `RefreshDisabledOptions`. `ResetOptionToDefault` also refuses a disabled widget, so a direct call cannot write a disabled option either. A consumer that disables menu widgets some other way should call `editor:RefreshResetButtonStates()` afterwards. Colors are passed through `ParseColors`, so any color format works as a default. Then the menu is rebuilt (`Refresh`), because the widgets show the values read at build time; the scroll position is kept.
 
 ### Layout
 
@@ -860,6 +862,7 @@ editor:SetPoint("TOPLEFT", tabBodyFrame, "TOPLEFT", 10, TAB_TOP_OFFSET)
 | `AddMoverUndoState(registered, anchorTable, oldX, oldY, newX, newY)` | Push a mover-style undo state (used by the mover's OnMouseUp internally; expose if you build custom drag logic). |
 | `RefreshUndoButtons()` | Re-evaluate toolbar button enable/disable. |
 | `ResetOptionToDefault(resetEntry)` | Put one option back to its default through its `set()` (undoable), then rebuild the menu. Called by the reset buttons. |
+| `RefreshResetButtonStates()` | Re-read which reset buttons are enabled (option has a default and its widget is enabled). Called automatically after builds, value changes and `RefreshDisabledOptions`. |
 | `LayoutResetButtons(resetEntries, widgetWidth)` | Place / hide the reset buttons after a menu build (called automatically). |
 | `GetResetButtonSize()` | Width and height of the reset buttons: the dropdown template height, or 18. |
 | `StartObjectMovement(anchorSettings)` / `StopObjectMovement()` | Mover lifecycle (called automatically). |
