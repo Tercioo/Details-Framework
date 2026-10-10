@@ -27,6 +27,9 @@ local DEFAULT_DROPDOWN_HEIGHT = 18
 local RESET_ICON_INSET = 2
 --the icon alpha while the option has no default to reset to
 local RESET_ICON_DISABLED_ALPHA = 0.4
+--numbers stored in a profile pick up float error, a 1 can be read back as 0.99999999, so a value this close to the
+--default counts as the default
+local DEFAULT_VALUE_TOLERANCE = 0.00001
 
 --shallow equality for undo snapshots. used to skip pushing undo entries when nothing actually
 --changed - this happens when BuildMenuVolatile fires set() during widget construction with the
@@ -433,7 +436,7 @@ local attributes = {
 ---@field RegisterObject fun(self:df_editor, object:uiobject|uiobject[], localizedLabel:string, id:string, profileTable:table, subTablePath:string, profileKeyMap:table, extraOptions:table?, callback:function?, options:df_editobjectoptions?, refFrame:frame, defaultValues:df_editor_defaultvalues?):df_editor_objectinfo register one or more widgets under a single logical entry. When an array of widgets is passed, all members share the same option set and any in-place selection click selects the registration with the clicked member becoming the brackets/mover focus. All members must share the same object type. defaultValues are what the reset to default buttons put back.
 ---@field GetResetButtonSize fun(self:df_editor):number the width and height of the reset to default buttons, the height of the dropdowns
 ---@field LayoutResetButtons fun(self:df_editor, resetEntries:df_editor_resetentry[], widgetWidth:number) place a reset to default button beside each option row that has one
----@field RefreshResetButtonStates fun(self:df_editor) enable each shown reset button whose option has a default and whose widget is enabled
+---@field RefreshResetButtonStates fun(self:df_editor) enable each shown reset button whose option has a default, whose widget is enabled and whose value is not the default already
 ---@field ResetOptionToDefault fun(self:df_editor, resetEntry:df_editor_resetentry) set an option back to its default, through the same path as a user edit so it can be undone
 ---@field UnregisterObject fun(self:df_editor, object:uiobject)
 ---@field OnHide fun(self:df_editor)
@@ -498,6 +501,7 @@ local editObjectDefaultOptions = {
 ---@field optionTable table the option table given to BuildMenuVolatile, its .widget is the widget built for it
 ---@field widgetType string
 ---@field defaultValue any nil when the option has no default
+---@field getCurrentValue fun():any the option's value as the profile holds it now
 
 ---@type df_editor_defaultoptions
 local editorDefaultOptions = {
@@ -568,6 +572,50 @@ local isOptionWidgetEnabled = function(widget)
         return false
     end
     return true
+end
+
+---@param value1 any
+---@param value2 any
+---@return boolean
+local isNearlyEqual = function(value1, value2)
+    if (type(value1) == "number" and type(value2) == "number") then
+        return math.abs(value1 - value2) < DEFAULT_VALUE_TOLERANCE
+    end
+    return value1 == value2
+end
+
+---true when the option already holds its default, numbers within DEFAULT_VALUE_TOLERANCE of it included
+---@param resetEntry df_editor_resetentry
+---@return boolean
+local isOptionAtDefault = function(resetEntry)
+    local defaultValue = resetEntry.defaultValue
+    local currentValue = resetEntry.getCurrentValue()
+
+    --colors are compared channel by channel after ParseColors, so a default given in any color format still matches
+    if (resetEntry.widgetType == "color") then
+        if (type(currentValue) ~= "table") then
+            return false
+        end
+        local defaultRed, defaultGreen, defaultBlue, defaultAlpha = detailsFramework:ParseColors(defaultValue)
+        local red, green, blue, alpha = detailsFramework:ParseColors(currentValue)
+        return isNearlyEqual(red, defaultRed) and isNearlyEqual(green, defaultGreen) and isNearlyEqual(blue, defaultBlue) and isNearlyEqual(alpha, defaultAlpha)
+    end
+
+    if (type(currentValue) == "table" and type(defaultValue) == "table") then
+        for key, value in pairs(defaultValue) do
+            if (not isNearlyEqual(currentValue[key], value)) then
+                return false
+            end
+        end
+        for key in pairs(currentValue) do
+            if (defaultValue[key] == nil) then
+                return false
+            end
+        end
+        return true
+    end
+
+    return isNearlyEqual(currentValue, defaultValue)
 end
 
 local onClickResetButton = function(blizzButton, mouseButton, editorFrame, resetEntry)
@@ -1214,9 +1262,9 @@ detailsFramework.EditorMixin = {
         self:RefreshResetButtonStates()
     end,
 
-    ---enable each shown reset button whose option has a default and whose widget is enabled. runs after every menu
-    ---build, after RefreshDisabledOptions and after every value change in the menu, which is when a toggle enables or
-    ---disables the options that follow it
+    ---enable each shown reset button whose option has a default, whose widget is enabled and whose value is not the
+    ---default already. runs after every menu build, after RefreshDisabledOptions, after every value change in the menu,
+    ---which is when a toggle enables or disables the options that follow it, and while the object is dragged
     ---@param self df_editor
     RefreshResetButtonStates = function(self)
         local resetButtons = self.resetButtons
@@ -1224,7 +1272,7 @@ detailsFramework.EditorMixin = {
             local resetButton = resetButtons[i]
             if (resetButton:IsShown()) then
                 local resetEntry = resetButton.resetEntry
-                if (resetEntry.defaultValue ~= nil and isOptionWidgetEnabled(resetEntry.optionTable.widget)) then
+                if (resetEntry.defaultValue ~= nil and isOptionWidgetEnabled(resetEntry.optionTable.widget) and not isOptionAtDefault(resetEntry)) then
                     resetButton:Enable()
                     resetButton.ResetIcon:SetDesaturated(false)
                     resetButton.ResetIcon:SetAlpha(1)
@@ -1242,7 +1290,7 @@ detailsFramework.EditorMixin = {
     ResetOptionToDefault = function(self, resetEntry)
         local optionTable = resetEntry.optionTable
         local defaultValue = resetEntry.defaultValue
-        if (defaultValue == nil or not isOptionWidgetEnabled(optionTable.widget)) then
+        if (defaultValue == nil or not isOptionWidgetEnabled(optionTable.widget) or isOptionAtDefault(resetEntry)) then
             return
         end
 
@@ -1760,6 +1808,10 @@ detailsFramework.EditorMixin = {
                                 optionTable = optionTable,
                                 widgetType = widgetType,
                                 defaultValue = getOptionDefaultValue(defaultValues, option.key, entryProfileTable, profileKey),
+                                --read from the profile, not from get(), which keeps the value of when the menu was built
+                                getCurrentValue = function()
+                                    return detailsFramework.table.getfrompath(entryProfileTable, profileKey)
+                                end,
                             }
                         end
                     end
@@ -1912,6 +1964,9 @@ detailsFramework.EditorMixin = {
                 anchorXSlider:SetValueNoCallback(anchorSettings.x)
                 local anchorYSlider = optionsFrame:GetWidgetById("anchoroffsety")
                 anchorYSlider:SetValueNoCallback(anchorSettings.y)
+
+                --the offset sliders above are moved without their callback, so the menu's value change hook does not run
+                self:RefreshResetButtonStates()
 
                 --anchorSettings IS the profile sub-table (assigned from getParentTable() in
                 --PrepareObjectForEditing for the anchor option). lines 1440-1441 above already
