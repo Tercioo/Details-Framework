@@ -530,7 +530,7 @@ Not the attribute `default` field: Plater fills that with the CURRENT profile va
 
 | `show_disabled_reset_buttons` | Row with a default | Row without a default |
 |---|---|---|
-| `true` (default) | enabled button | button shown, disabled, desaturated icon |
+| `true` (default) | enabled button | button shown, disabled: whole button at alpha 0.3, desaturated icon |
 | `false` | enabled button | no button |
 
 The argument is optional; a registration without it behaves as if no option has a default.

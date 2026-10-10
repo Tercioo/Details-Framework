@@ -25,8 +25,8 @@ local ROW_HIGHLIGHT_EXTRA_WIDTH = 5
 local DEFAULT_DROPDOWN_HEIGHT = 18
 --the icon is drawn this many pixels inside the button on each side
 local RESET_ICON_INSET = 2
---the icon alpha while the option has no default to reset to
-local RESET_ICON_DISABLED_ALPHA = 0.4
+--the alpha of the whole button while it is disabled
+local RESET_BUTTON_DISABLED_ALPHA = 0.3
 --numbers stored in a profile pick up float error, a 1 can be read back as 0.99999999, so a value this close to the
 --default counts as the default
 local DEFAULT_VALUE_TOLERANCE = 0.00001
@@ -1275,11 +1275,11 @@ detailsFramework.EditorMixin = {
                 if (resetEntry.defaultValue ~= nil and isOptionWidgetEnabled(resetEntry.optionTable.widget) and not isOptionAtDefault(resetEntry)) then
                     resetButton:Enable()
                     resetButton.ResetIcon:SetDesaturated(false)
-                    resetButton.ResetIcon:SetAlpha(1)
+                    resetButton:SetAlpha(1)
                 else
                     resetButton:Disable()
                     resetButton.ResetIcon:SetDesaturated(true)
-                    resetButton.ResetIcon:SetAlpha(RESET_ICON_DISABLED_ALPHA)
+                    resetButton:SetAlpha(RESET_BUTTON_DISABLED_ALPHA)
                 end
             end
         end
