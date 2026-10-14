@@ -1898,7 +1898,7 @@ detailsFramework.EditorMixin = {
             canvasScrollBox:SetVerticalScroll(0)
         end
 
-        if (editingOptions.can_move) then
+       if (editingOptions.can_move and self:IsVisible()) then
             self:StartObjectMovement(anchorSettings)
         else
             --hide mover frame
