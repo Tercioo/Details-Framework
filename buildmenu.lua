@@ -51,6 +51,7 @@ local _
 ---@field descPhraseId string
 ---@field hooks table
 ---@field include_default boolean
+---@field menu_height number? height in pixels of the menu with the options, each option takes 20 pixels, default 300
 
 ---@class df_menu_toggle : df_menu_table
 ---@field set function
@@ -127,6 +128,9 @@ local _
 ---@field width number? optional fixed width for the group frame
 ---@field height number? optional fixed height for the group frame
 ---@field padding number? optional padding to add around the group frame, this is used to give more space between the group border and the widgets inside it
+
+--the menu height a dropdown gets when created (dropdown.lua), used when a dropdown row has no menu_height
+local DEFAULT_DROPDOWN_MENU_HEIGHT = 300
 
 detailsFramework.OptionsFrameMixin = {
 
@@ -459,6 +463,9 @@ local setDropdownProperties = function(parent, widget, widgetTable, currentXOffs
     if (widgetHeight) then
         widget:SetHeight(widgetHeight)
     end
+
+    --the volatile menu reuses its dropdowns, so a row without menu_height puts the default height back
+    widget:SetMenuSize(nil, widgetTable.menu_height or DEFAULT_DROPDOWN_MENU_HEIGHT)
 
     setWidgetId(parent, widgetTable, widget)
 
