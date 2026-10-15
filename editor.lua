@@ -2341,6 +2341,12 @@ detailsFramework.EditorMixin = {
                             children_follow_enabled = option.children_follow_enabled,
                             children_follow_reverse = option.children_follow_reverse,
                             disableif = option.disableif,
+                            --BuildMenu's label icon fields: a texture drawn on the left side of the
+                            --row's label (buildmenu.lua processLabelIcon)
+                            icontexture = option.icontexture,
+                            iconcoords = option.iconcoords,
+                            iconsize = option.iconsize,
+                            iconfilesize = option.iconfilesize,
                         }
 
                         --forwarded for the generic `dropdown` widget; BuildMenu expects `values`

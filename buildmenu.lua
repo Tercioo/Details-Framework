@@ -331,6 +331,10 @@ local processLabelIcon = function(label, widgetTable, languageTable, textTemplat
     local namePhrase = getNamePhraseText(languageTable, widgetTable, useColon, languageAddonId)
 
     local iconString = ""
+    --an icon taller than the text makes the label's line as tall as the icon, and the text is drawn
+    --centred in that line, so a label pinned by its top corner drops its text by half the difference.
+    --the row placement raises the label by this much to keep the text where a label without an icon has it
+    local iconRaise = 0
     if widgetTable.icontexture then
         local tc = widgetTable.iconcoords or {.1, .9, .1, .9}
         local fileSize = widgetTable.iconfilesize or {64, 64}
@@ -341,13 +345,16 @@ local processLabelIcon = function(label, widgetTable, languageTable, textTemplat
         local bAddAfterText = false
 
         namePhrase, iconString = detailsFramework:AddTextureToText(namePhrase, detailsFramework:CreateTextureInfo(widgetTable.icontexture, iconSize[1], iconSize[2], tc[1], tc[2], tc[3], tc[4], fileSize[1], fileSize[2]), bAddSpace, bAddAfterText)
+        iconRaise = math.max(0, (iconSize[2] - height) / 2)
     end
 
     label.__iconString = iconString
     label.__iconStringBefore = true
+    label.__iconRaise = iconRaise
     if label.widget then
         label.widget.__iconString = iconString
         label.widget.__iconStringBefore = true
+        label.widget.__iconRaise = iconRaise
     end
 
     label:SetText(namePhrase)
@@ -405,6 +412,20 @@ local createOptionHighlightFrame = function(frame, label, widgetWidth)
     return highlightFrame
 end
 
+---pin a paired row's label to the menu, raised by however much its icon grew it (processLabelIcon),
+---and keep the row's highlight where it sits for a label without an icon. the highlight hangs off the
+---label, so raising the label alone would raise the whole row
+---@param widget table the row's widget, its highlightFrame already created
+---@param label fontstring
+---@param currentXOffset number
+---@param currentYOffset number
+local setPairedLabelPoint = function(widget, label, currentXOffset, currentYOffset)
+    --nil on a label processLabelIcon never saw
+    local iconRaise = label.__iconRaise or 0
+    PixelUtil.SetPoint(label, "topleft", widget:GetParent(), "topleft", currentXOffset, currentYOffset + iconRaise)
+    PixelUtil.SetPoint(widget.highlightFrame, "topleft", label, "topleft", -2, 5 - iconRaise)
+end
+
 local setLabelProperties = function(parent, widget, widgetTable, currentXOffset, currentYOffset, template)
     widget._get = widgetTable.get
     widget.widget_type = "label"
@@ -447,13 +468,13 @@ local setDropdownProperties = function(parent, widget, widgetTable, currentXOffs
     label:ClearAllPoints()
 
     if (bAlignAsPairs) then --regular
-        PixelUtil.SetPoint(label, "topleft", widget:GetParent(), "topleft", currentXOffset, currentYOffset)
-        PixelUtil.SetPoint(widget.widget, "left", label, "left", nAlignAsPairsLength, 0)
-
         if (not widget.highlightFrame) then
             local highlightFrame = createOptionHighlightFrame(widget, label, (widgetWidth or 140) + nAlignAsPairsLength + 5)
             widget.highlightFrame = highlightFrame
         end
+
+        setPairedLabelPoint(widget, label, currentXOffset, currentYOffset)
+        PixelUtil.SetPoint(widget.widget, "left", label, "left", nAlignAsPairsLength, 0)
     else
         widget:SetPoint("left", label, "right", 2, 0)
         label:SetPoint("topleft", parent, "topleft", currentXOffset, currentYOffset)
@@ -621,7 +642,7 @@ local setToggleProperties = function(parent, widget, widgetTable, currentXOffset
 
         widget._valueChangeHook = valueChangeHook
         widget.highlightFrame:SetScript("OnClick", highlightFrameOnClickToggle)
-        PixelUtil.SetPoint(label, "topleft", widget:GetParent(), "topleft", currentXOffset, currentYOffset)
+        setPairedLabelPoint(widget, label, currentXOffset, currentYOffset)
         PixelUtil.SetPoint(widget.widget, "right", widget.highlightFrame, "right", -3, 0)
     else
         if (widgetTable.boxfirst or bUseBoxFirstOnAllWidgets) then
@@ -728,13 +749,13 @@ local setRangeProperties = function(parent, widget, widgetTable, currentXOffset,
     label:ClearAllPoints()
 
     if (bAlignAsPairs) then
-        PixelUtil.SetPoint(label, "topleft", widget:GetParent(), "topleft", currentXOffset, currentYOffset)
-        PixelUtil.SetPoint(widget.widget, "left", label, "left", nAlignAsPairsLength + valueBoxLeftSpace, 0)
-
         if (not widget.highlightFrame) then
             local highlightFrame = createOptionHighlightFrame(widget, label, (widgetWidth or 140) + nAlignAsPairsLength + 5)
             widget.highlightFrame = highlightFrame
         end
+
+        setPairedLabelPoint(widget, label, currentXOffset, currentYOffset)
+        PixelUtil.SetPoint(widget.widget, "left", label, "left", nAlignAsPairsLength + valueBoxLeftSpace, 0)
 
         widget.bAttachButtonsToLeft = true
     else
@@ -821,7 +842,7 @@ local setColorProperties = function(parent, widget, widgetTable, currentXOffset,
         ----
         widget._valueChangeHook = valueChangeHook
         --widget.highlightFrame:SetScript("OnClick", highlightFrameOnClickToggle) --todo make this function for color picker color pick start
-        PixelUtil.SetPoint(label, "topleft", widget:GetParent(), "topleft", currentXOffset, currentYOffset)
+        setPairedLabelPoint(widget, label, currentXOffset, currentYOffset)
         PixelUtil.SetPoint(widget.widget, "right", widget.highlightFrame, "right", -3, 0)
     else
         if (widgetTable.boxfirst or bUseBoxFirstOnAllWidgets) then
@@ -991,13 +1012,13 @@ local setTextEntryProperties = function(parent, widget, widgetTable, currentXOff
     label:ClearAllPoints()
 
     if (bAlignAsPairs) then
-        PixelUtil.SetPoint(label, "topleft", widget:GetParent(), "topleft", currentXOffset, currentYOffset)
-        PixelUtil.SetPoint(widget.widget, "left", label, "left", nAlignAsPairsLength, 0)
-
         if (not widget.highlightFrame) then
             local highlightFrame = createOptionHighlightFrame(widget, label, (widgetWidth or 140) + nAlignAsPairsLength + 5)
             widget.highlightFrame = highlightFrame
         end
+
+        setPairedLabelPoint(widget, label, currentXOffset, currentYOffset)
+        PixelUtil.SetPoint(widget.widget, "left", label, "left", nAlignAsPairsLength, 0)
     else
         widget:SetPoint("left", label, "right", 2, 0)
         label:SetPoint("topleft", parent, "topleft", currentXOffset, currentYOffset)
