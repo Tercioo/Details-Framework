@@ -498,10 +498,12 @@ function detailsFramework:CreateHealthBar(parent, name, settingsOverride)
 			-- the below would be better for proper scaling, but I don't want the bar to run out of the nameplate...
 			healthBar.shieldAbsorbIndicatorBar:SetPoint ("bottomleft", healthBar.barTexture, "bottomright")
 
-			-- proper width sizing
-			healthBar:HookScript("OnSizeChanged", function(self, width)
-				self.incomingHealIndicatorBar:SetWidth(width)
-				self.shieldAbsorbIndicatorBar:SetWidth(width)
+			--follows the health bar size, the prediction bars need the full health bar width
+			local sizeTracker = CreateFrame("Frame", nil, healthBar)
+			sizeTracker:SetAllPoints()
+			sizeTracker:SetScript("OnSizeChanged", function(self, width)
+				healthBar.incomingHealIndicatorBar:SetWidth(width)
+				healthBar.shieldAbsorbIndicatorBar:SetWidth(width)
 			end)
 
 			-- not so nice, but works in compatibility
