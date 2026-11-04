@@ -6013,6 +6013,7 @@ end
 
 --~spec
 function DF:GetSpecInfoFromSpecIcon(specIcon)
+	if (specIcon == nil or (issecretvalue and issecretvalue(specIcon))) then return nil end --secret values cannot be used as table keys
 	local specInfo = specIconToInfo[specIcon]
 	if (not specInfo) then
 		specInfo = specIconToSpecInformation[specIcon]
@@ -6024,6 +6025,7 @@ function DF:GetSpecInfoFromSpecIcon(specIcon)
 end
 
 function DF:GetSpecIdFromSpecIcon(specIcon)
+	if (specIcon == nil or (issecretvalue and issecretvalue(specIcon))) then return nil end
 	local info = specIconToInfo[specIcon]
 	return info and info.specId
 end
