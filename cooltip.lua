@@ -1491,9 +1491,17 @@ function DF:CreateCoolTip()
 		menuButton.spark:SetAlpha(sparkAlpha)
 
 		menuButton.spark:ClearAllPoints()
-		menuButton.spark:SetPoint("left", menuButton.statusbar, "left", (menuButton.statusbar:GetValue() * (menuButton.statusbar:GetWidth() / 100)) - 5 + positionXOffset, 0 + positionYOffset)
 		menuButton.spark2:ClearAllPoints()
-		menuButton.spark2:SetPoint("left", menuButton.statusbar, "left", menuButton.statusbar:GetValue() * (menuButton.statusbar:GetWidth()/100) - 16 + positionXOffset, 0 + positionYOffset)
+		--the bar's value or width can be a secret number in combat (its size follows secret text widths), and arithmetic on it errors
+		local statusBarValue = menuButton.statusbar:GetValue()
+		local statusBarWidth = menuButton.statusbar:GetWidth()
+		if (issecretvalue(statusBarValue) or issecretvalue(statusBarWidth)) then
+			menuButton.spark:Hide()
+			menuButton.spark2:Hide()
+			return
+		end
+		menuButton.spark:SetPoint("left", menuButton.statusbar, "left", (statusBarValue * (statusBarWidth / 100)) - 5 + positionXOffset, 0 + positionYOffset)
+		menuButton.spark2:SetPoint("left", menuButton.statusbar, "left", statusBarValue * (statusBarWidth / 100) - 16 + positionXOffset, 0 + positionYOffset)
 	end
 
 	function gameCooltip:StatusBar(menuButton, statusBarSettings)
