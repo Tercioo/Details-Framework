@@ -30,7 +30,7 @@ end
 
 --api locals
 local PixelUtil = PixelUtil or DFPixelUtil
-local version = 35
+local version = 36
 
 local CONST_MENU_TYPE_MAINMENU = "main"
 local CONST_MENU_TYPE_SUBMENU = "sub"
@@ -282,6 +282,16 @@ function DF:CreateCoolTip()
 
 	--create frames, self is frame1 or frame2
 	local createTooltipFrames = function(self)
+		--BackdropTemplate also updates the coordinates from OnBackdropSizeChanged,
+		--after a host anchor can make the size secret. Guard these cooltip frames
+		--before Blizzard does math, keeping the last coordinates until a safe update.
+		self.SetupTextureCoordinates = function(frame)
+			if (issecretvalue(frame:GetWidth()) or issecretvalue(frame:GetHeight())) then
+				return
+			end
+			BackdropTemplateMixin.SetupTextureCoordinates(frame)
+		end
+
 		self:SetSize(500, 500)
 		self:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 
